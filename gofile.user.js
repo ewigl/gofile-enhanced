@@ -2,8 +2,8 @@
 // @name         GoFile 增强
 // @name:en      GoFile User Script
 // @namespace    https://github.com/ewigl/gofile-userscript
-// @version      0.1.1
-// @description  在 GoFile 文件页面添加一个按钮,导出当前页面全部文件下载链接。用以配合 IDM、aria2 等下载器使用.
+// @version      0.1.2
+// @description  在 GoFile 文件页面添加一个按钮,导出当前页面全部文件下载链接。用以配合 IDM、aria2 等下载器使用。
 // @description:en Add a button to export download links of current page files. Can be used in IDM, aria2 and similar downloaders.
 // @author       Licht
 // @license      MIT
