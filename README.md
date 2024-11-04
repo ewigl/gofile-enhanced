@@ -32,6 +32,6 @@
 
 ## 演示视频 / Demo Video
 
-### V 0.1+
+### V 0.2+
 
-https://github.com/user-attachments/assets/f4f90562-bea1-476d-bbd1-c61103127e2f
+https://github.com/user-attachments/assets/1a819b31-2ccd-4cf5-8462-d2db20eadfe3
