@@ -10,7 +10,7 @@
 
 ### V 0.3+
 
--   现在可以导出 IDM 专用格式，后缀为 ef2 的文件。
+-   现在可以导出 IDM 专用格式，后缀为 ef2 的文件。导入 IDM 时选择从"IDM 导出文件"导入。
 -   Todo：Aria2 支持。（目前 Aria2 需要手动设置 Cookie）
 
 ### V 0.2+
@@ -42,6 +42,6 @@
 
 ## 演示视频 / Demo Video
 
-### V 0.2+
+### V 0.3+
 
-https://github.com/user-attachments/assets/1a819b31-2ccd-4cf5-8462-d2db20eadfe3
+https://github.com/user-attachments/assets/ab272738-ebe5-4291-b8e4-4cc46e33aee1
