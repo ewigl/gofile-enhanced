@@ -29,6 +29,21 @@
     // cookie: accountToken=ABCDEFG
     // >
 
+    // createToast
+    // createToast({
+    //     toastIcon: "bi-exclamation-circle",
+    //     toastTitle: "Title",
+    //     toastHeaderColor: "text-bg-primary",
+    //     toastBody: "Body" + object
+    //   });
+
+    // createModal
+    // createModal({
+    //     modalTitle: "Title",
+    //     modalBody: "Body" + content,
+    //     modalYesLabel: "OK",
+    //   });
+
     // constants
     const DEFAULT_LANGUAGE = 'en-US'
 
@@ -148,7 +163,6 @@
 
             utils.downloadFile(links, format)
         },
-
         addButtonsToSidebar() {
             const hrLine = document.createElement('hr')
             hrLine.classList.add('my-0')
