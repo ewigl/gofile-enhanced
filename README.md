@@ -10,7 +10,7 @@
 
 ## 演示视频 / Demo Video
 
-### V 0.3+
+### V 0.4 +
 
 https://github.com/user-attachments/assets/52f21044-82dc-40e4-a1fc-aa05cb43bce1
 
