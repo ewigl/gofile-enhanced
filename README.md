@@ -8,9 +8,7 @@
 
 ---
 
-## 演示视频 / Demo Video
-
-### V 0.4 +
+### 演示视频 / Demo Video
 
 https://github.com/user-attachments/assets/52f21044-82dc-40e4-a1fc-aa05cb43bce1
 
@@ -24,11 +22,9 @@ https://github.com/user-attachments/assets/52f21044-82dc-40e4-a1fc-aa05cb43bce1
 
 ### V 0.3+
 
--   现在可以导出 IDM 专用格式，后缀为 ef2 的文件。导入 IDM 时选择从"IDM 导出文件"导入。
--   Todo：Aria2 支持。（目前 Aria2 需要手动设置 Cookie）
+-   现在可以导出 IDM 专用格式 - 后缀为 ef2 的文件。导入 IDM 时选择从"IDM 导出文件"导入。
 
 -   Now you can export links to IDM format, with suffix of ef2.
--   Todo: Aria2 support. (Currently, you need to manually set the cookie.)
 
 ### V 0.2+
 
