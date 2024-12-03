@@ -2,7 +2,7 @@
 // @name         GoFile 增强
 // @name:en      GoFile Enhanced
 // @namespace    https://github.com/ewigl/gofile-enhanced
-// @version      0.4.5
+// @version      0.4.6
 // @description  在 GoFile 文件页面添加一个按钮,导出当前页面全部文件下载链接。用以配合 IDM、aria2 等下载器使用。
 // @description:en Export all files' download link. Use along with IDM, aria2 and similar downloaders.
 // @author       Licht
@@ -204,7 +204,7 @@
             URL.revokeObjectURL(url)
         },
         getButtonTemplate(iconClass, buttonText) {
-            return `<a href="javascript:void(0)" id="index_GofileEnhanced" class="hover:text-blue-500 flex items-center gap-2" aria-label="${buttonText}"><i class="fas ${iconClass}" /> ${buttonText} </a>`
+            return `<a href="javascript:void(0)" id="index_GofileEnhanced" class="hover:text-blue-500 flex items-center gap-2" aria-label="${buttonText}"><i class="fas ${iconClass}"></i> ${buttonText} </a>`
         },
         getFormInputItemTemplate(name, i18nKey) {
             return `
