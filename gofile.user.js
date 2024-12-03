@@ -2,7 +2,7 @@
 // @name         GoFile 增强
 // @name:en      GoFile Enhanced
 // @namespace    https://github.com/ewigl/gofile-enhanced
-// @version      0.4.0
+// @version      0.4.5
 // @description  在 GoFile 文件页面添加一个按钮,导出当前页面全部文件下载链接。用以配合 IDM、aria2 等下载器使用。
 // @description:en Export all files' download link. Use along with IDM, aria2 and similar downloaders.
 // @author       Licht
@@ -21,34 +21,14 @@
 ;(function () {
     'use strict'
 
-    // comments for myself
-    // mainFolderObject (object): GoFile OBJECT (NOT ARRAY!) of current page's all files and folders.
-    // contentsSelected (object): user selected files or folders.
-    // accountsObject (object): user accounts object.
+    // New Api
+    // appdata: literally, app data
 
-    // accountActive (string): active account.
-
-    // IDM Exported Format (CRLF(${CRLF}) only):
+    // IDM Exported Format (support CRLF(\r\n) only):
     // <
     // url
     // cookie: accountToken=ABCDEFG
     // >
-
-    // createToast
-    // createToast({
-    //     toastIcon: "bi-exclamation-circle",
-    //     toastTitle: "Title",
-    //     // text-bg-warning, text-bg-danger, text-bg-success, text-bg-primary
-    //     toastHeaderColor: "text-bg-primary",
-    //     toastBody: "Body" + object
-    //   });
-
-    // createModal
-    // createModal({
-    //     modalTitle: "Title",
-    //     modalBody: "Body" + content,
-    //     modalYesLabel: "OK",
-    //   });
 
     const styleCSS = `
     .gofile-enhanced-form {
@@ -185,7 +165,7 @@
             })
         },
         getTranslation: (key) => I18N[navigator.language || DEFAULT_LANGUAGE][key],
-        getToken: () => accountsObject[accountActive].token,
+        getToken: () => document.cookie,
         getAria2RpcConfig() {
             return {
                 address: utils.getValue(ARIA2_RPC_CONFIG_KEY.rpcAddress),
@@ -214,23 +194,12 @@
             const link = document.createElement('a')
             link.href = url
             // generate file neme by timestamp
-            link.download = `${mainFolderObject.name} - ${new Date().getTime()}.${format}`
+            link.download = `${appdata.fileManager.mainContent.data.name} - ${new Date().getTime()}.${format}`
             link.click()
             URL.revokeObjectURL(url)
         },
         getButtonTemplate(iconClass, buttonText) {
-            return `
-            <a href="javascript:void(0)">
-                <div class="row justify-content-center rounded-pill sidebarItem mt-1 mb-1 hover">
-                    <div class="col-auto">
-                    <span style="font-size: 1.5em"><i class="bi ${iconClass}"></i></span>
-                    </div>
-                    <div class="col sidebarMobile d-flex align-items-center" style="display: block;">
-                    <span> ${buttonText} </span>
-                    </div>
-                </div>
-            </a>
-            `
+            return `<a href="javascript:void(0)" id="index_GofileEnhanced" class="hover:text-blue-500 flex items-center gap-2" aria-label="${buttonText}"><i class="fas ${iconClass}" /> ${buttonText} </a>`
         },
         getFormInputItemTemplate(name, i18nKey) {
             return `
@@ -274,9 +243,11 @@
 
     const operations = {
         exportToFile(selectMode = false, format = 'txt') {
-            const objectKeys = Object.keys(selectMode ? contentsSelected : mainFolderObject.children)
+            const objectKeys = Object.keys(
+                selectMode ? appdata.fileManager.contentsSelected : appdata.fileManager.mainContent.data.children
+            )
 
-            const fileKeys = objectKeys.filter((key) => mainFolderObject.children[key].type === FILE_TYPE)
+            const fileKeys = objectKeys.filter((key) => appdata.fileManager.mainContent.data.children[key].type === FILE_TYPE)
 
             if (fileKeys.length === 0) {
                 return createToast({
@@ -290,18 +261,17 @@
             }
 
             if (format === EXPORT_FORMAT.aria2) {
-                return operations.sendToRPC(fileKeys.map((key) => mainFolderObject.children[key].link))
+                return operations.sendToRPC(fileKeys.map((key) => appdata.fileManager.mainContent.data.children[key].link))
             }
 
             const formatMap = {
-                [EXPORT_FORMAT.ef2]: (item) =>
-                    `<${CRLF}${item.link}${CRLF}cookie: accountToken=${utils.getToken()}${CRLF}>${CRLF}`,
+                [EXPORT_FORMAT.ef2]: (item) => `<${CRLF}${item.link}${CRLF}cookie: ${utils.getToken()}${CRLF}>${CRLF}`,
                 [EXPORT_FORMAT.txt]: (item) => `${item.link}${CRLF}`,
             }
 
             const links = fileKeys
                 .map((key) => {
-                    const item = mainFolderObject.children[key]
+                    const item = appdata.fileManager.mainContent.data.children[key]
                     return formatMap[format](item)
                 })
                 .join('')
@@ -320,7 +290,7 @@
                         `token:${rpcConfig.secret}`,
                         [link],
                         {
-                            header: [`Cookie: accountToken=${utils.getToken()}`],
+                            header: [`Cookie: ${utils.getToken()}`],
                             dir: rpcConfig.dir,
                         },
                     ],
@@ -391,9 +361,9 @@
             })
         },
         addButtonsToSidebar() {
-            // ---
-            const hrLine = document.createElement('hr')
-            hrLine.classList.add('my-0')
+            // boeder line
+            const hrLine = document.createElement('li')
+            hrLine.classList.add('border-b', 'border-gray-700')
 
             const buttonConfigs = [
                 // txt buttons
@@ -409,7 +379,7 @@
 
             // map buttons (except aria2) to get button dom element
             const buttons = buttonConfigs.map((config) => {
-                const button = document.createElement('div')
+                const button = document.createElement('li')
                 button.innerHTML = utils.getButtonDom(config.selectMode, config.format)
                 // add click event for each button
                 button.addEventListener('click', operations.exportToFile.bind(null, config.selectMode, config.format))
@@ -447,12 +417,15 @@
             buttons.push(rpcSettingsButton)
             buttons.push(rpcResetButton)
 
-            const container = document.createElement('div')
-            container.appendChild(hrLine)
+            const container = document.createElement('ul')
+            // add class to container
+            container.classList.add('pt-4', 'space-y-4', 'border-gray-700')
+            // add hr line
+            container.appendChild(hrLine.cloneNode(true))
             // append buttons to container
             buttons.forEach((button) => container.appendChild(button))
             // add container to sidebar
-            document.querySelector('#sidebar').appendChild(container)
+            document.querySelector('#index_sidebar').appendChild(container)
         },
     }
 
@@ -461,9 +434,9 @@
             // init RPC config
             utils.initDefaultConfig()
 
-            // add buttons to sidebar, watch if mainFolderObject is ready
+            // add buttons to sidebar, watch if appdata.fileManager.mainContent.data is ready
             let interval = setInterval(() => {
-                if (mainFolderObject.children) {
+                if (appdata.fileManager.mainContent.data.children) {
                     operations.addButtonsToSidebar()
                     clearInterval(interval)
                 }
