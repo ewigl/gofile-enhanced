@@ -24,6 +24,9 @@
     // New Api
     // appdata: literally, app data
 
+    // function createNotification(title, message, type = 'success', duration = 3000)
+    // function createPopup({ title, content, icon = null, backgroundOpacity = true, showCloseButton = true })
+
     // IDM Exported Format (support CRLF(\r\n) only):
     // <
     // url
@@ -70,7 +73,7 @@
             selectedToARIA2: '选中 -> Aria2 RPC',
             aria2RpcSettings: 'Aria2 RPC 设置',
             aria2RpcReset: '重置 RPC 设置',
-            // Toast
+            // Notification
             noFileSelected: '未选中任何文件',
             noFileSelectedDescription: '请先选中文件',
             noFiles: '没有文件可以下载',
@@ -88,6 +91,8 @@
             cancel: '取消',
             success: '成功',
             fail: '失败',
+            reset: '重置',
+            to: '为',
         },
         'en-US': {
             // Button
@@ -99,7 +104,7 @@
             selectedToARIA2: 'Selected -> Aria2 RPC',
             aria2RpcSettings: 'Aria2 RPC Settings',
             aria2RpcReset: 'Reset RPC settings',
-            // Toast
+            // Notification
             noFileSelected: 'No file selected',
             noFileSelectedDescription: 'Please select files first',
             noFiles: 'No files can be downloaded',
@@ -117,6 +122,8 @@
             cancel: 'Cancel',
             success: 'Success',
             fail: 'Fail',
+            reset: 'Reset',
+            to: 'to',
         },
     }
 
@@ -179,12 +186,10 @@
         resetRPCConfig() {
             DEFAULT_CONFIG.rpcSettings.forEach((item) => {
                 utils.setValue(item.name, item.value)
-                createToast({
-                    toastIcon: 'bi-check-circle',
-                    toastTitle: utils.getTranslation('success'),
-                    toastHeaderColor: 'text-bg-success',
-                    toastBody: `${item.name}: "${item.value}"`,
-                })
+                createNotification(
+                    utils.getTranslation('success'),
+                    `${utils.getTranslation('reset')} ${item.name} ${utils.getTranslation('to')} "${item.value}"`
+                )
             })
             // for each DEFAULT_CONFIG.rpcSettings
         },
@@ -250,14 +255,11 @@
             const fileKeys = objectKeys.filter((key) => appdata.fileManager.mainContent.data.children[key].type === FILE_TYPE)
 
             if (fileKeys.length === 0) {
-                return createToast({
-                    toastIcon: 'bi-exclamation-circle',
-                    toastTitle: selectMode ? utils.getTranslation('noFileSelected') : utils.getTranslation('noFiles'),
-                    toastHeaderColor: 'text-bg-warning',
-                    toastBody: selectMode
-                        ? utils.getTranslation('noFileSelectedDescription')
-                        : utils.getTranslation('noFilesDescription'),
-                })
+                return createNotification(
+                    selectMode ? utils.getTranslation('noFileSelected') : utils.getTranslation('noFiles'),
+                    selectMode ? utils.getTranslation('noFileSelectedDescription') : utils.getTranslation('noFilesDescription'),
+                    'warning'
+                )
             }
 
             if (format === EXPORT_FORMAT.aria2) {
@@ -308,55 +310,38 @@
 
                             responseArray.forEach((item) => {
                                 if (item.error) {
-                                    createToast({
-                                        toastIcon: 'bi-x-circle',
-                                        toastTitle: utils.getTranslation('fail'),
-                                        toastHeaderColor: 'text-bg-danger',
-                                        toastBody: `${utils.getTranslation('rpcSendFailed')} / ${item.error.code} - ${
-                                            item.error.message
-                                        }`,
-                                    })
+                                    createNotification(
+                                        utils.getTranslation('fail'),
+                                        `${utils.getTranslation('rpcSendFailed')} / ${item.error.code} - ${item.error.message}`,
+                                        'error'
+                                    )
                                 } else {
-                                    createToast({
-                                        toastIcon: 'bi-check-circle',
-                                        toastTitle: utils.getTranslation('success'),
-                                        toastHeaderColor: 'text-bg-success',
-                                        toastBody: `${utils.getTranslation('rpcSendSuccess')} / ${item.result}`,
-                                    })
+                                    createNotification(
+                                        utils.getTranslation('success'),
+                                        `${utils.getTranslation('rpcSendSuccess')} / ${item.result}`
+                                    )
                                 }
                             })
                         } catch (error) {
-                            createToast({
-                                toastIcon: 'bi-x-circle',
-                                toastTitle: utils.getTranslation('fail'),
-                                toastHeaderColor: 'text-bg-danger',
-                                toastBody: error.toString(),
-                            })
+                            createNotification(utils.getTranslation('fail'), error.toString(), 'error')
                         }
                     } else {
-                        createToast({
-                            toastIcon: 'bi-x-circle',
-                            toastTitle: utils.getTranslation('fail'),
-                            toastHeaderColor: 'text-bg-danger',
-                            toastBody: `${utils.getTranslation('rpcSendFailed')} / ${httpRes.status} - ${httpRes.statusText}`,
-                        })
+                        createNotification(
+                            utils.getTranslation('fail'),
+                            `${utils.getTranslation('rpcSendFailed')} / ${httpRes.status} - ${httpRes.statusText}`,
+                            'error'
+                        )
                     }
                 },
                 onerror: (error) => {
-                    createToast({
-                        toastIcon: 'bi-x-circle',
-                        toastTitle: utils.getTranslation('fail'),
-                        toastHeaderColor: 'text-bg-danger',
-                        toastBody: JSON.stringify(error),
-                    })
+                    createNotification(utils.getTranslation('fail'), JSON.stringify(error), 'error')
                 },
                 onabort: () => {
-                    createToast({
-                        toastIcon: 'bi-x-circle',
-                        toastTitle: utils.getTranslation('fail'),
-                        toastHeaderColor: 'text-bg-danger',
-                        toastBody: utils.getTranslation('unknownError') + ' / (abort)',
-                    })
+                    createNotification(
+                        utils.getTranslation('fail'),
+                        utils.getTranslation('unknownError') + ' / (abort)',
+                        'error'
+                    )
                 },
             })
         },
