@@ -151,14 +151,14 @@
     }
 
     const ICON_CLASS = {
-        allToTXT: 'bi-file-earmark-arrow-down-fill',
-        selectedToTXT: 'bi-file-earmark-arrow-down',
-        allToEF2: 'bi-send-check-fill',
-        selectedToEF2: 'bi-send-check',
-        allToARIA2: 'bi-cloud-arrow-down-fill',
-        selectedToARIA2: 'bi-cloud-arrow-down',
-        aria2RpcSettings: 'bi-gear-fill',
-        aria2RpcReset: 'bi-arrow-counterclockwise',
+        allToTXT: 'fas fa-file-lines',
+        selectedToTXT: 'far fa-file-lines',
+        allToEF2: 'fas fa-paper-plane',
+        selectedToEF2: 'far fa-paper-plane',
+        allToARIA2: 'fas fa-circle-down',
+        selectedToARIA2: 'far fa-circle-down',
+        aria2RpcSettings: 'fas fa-gear',
+        aria2RpcReset: 'fas fa-rotate-left',
     }
 
     const utils = {
@@ -204,7 +204,7 @@
             URL.revokeObjectURL(url)
         },
         getButtonTemplate(iconClass, buttonText) {
-            return `<a href="javascript:void(0)" id="index_GofileEnhanced" class="hover:text-blue-500 flex items-center gap-2" aria-label="${buttonText}"><i class="fas ${iconClass}"></i> ${buttonText} </a>`
+            return `<a href="javascript:void(0)" id="index_GofileEnhanced" class="hover:text-blue-500 flex items-center gap-2" aria-label="${buttonText}"><i class="${iconClass}"></i> ${buttonText} </a>`
         },
         getFormInputItemTemplate(name, i18nKey) {
             return `
