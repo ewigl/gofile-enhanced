@@ -14,6 +14,11 @@ https://github.com/user-attachments/assets/52f21044-82dc-40e4-a1fc-aa05cb43bce1
 
 ---
 
+### V 0.4.5
+
+-   更新支持 GoFile 网站新 Api，通知功能与 Aria2 配置面板暂不可用。
+-   Update support for GoFile new Api, notification feature and aria2 config panel is not available now.
+
 ### V 0.4 +
 
 -   添加 Aira2 支持。通过 RPC 直接将下载任务交给 Aria2。
