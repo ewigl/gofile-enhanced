@@ -151,11 +151,11 @@
     }
 
     const ICON_CLASS = {
-        allToTXT: 'fas fa-file-lines',
-        selectedToTXT: 'far fa-file-lines',
+        allToTXT: 'fas fa-clone',
         allToEF2: 'fas fa-paper-plane',
-        selectedToEF2: 'far fa-paper-plane',
         allToARIA2: 'fas fa-circle-down',
+        selectedToTXT: 'far fa-clone',
+        selectedToEF2: 'far fa-paper-plane',
         selectedToARIA2: 'far fa-circle-down',
         aria2RpcSettings: 'fas fa-gear',
         aria2RpcReset: 'fas fa-rotate-left',
@@ -219,7 +219,9 @@
             >
             `
         },
-        getButtonDom(selectMode = false, format = 'txt') {
+        getButtonDom(config) {
+            const { selectMode = false, format = 'txt' } = config
+
             const buttonText = utils.getTranslation(
                 selectMode ? 'selectedTo' + format.toUpperCase() : 'allTo' + format.toUpperCase()
             )
@@ -227,7 +229,11 @@
                 ? ICON_CLASS['selectedTo' + format.toUpperCase()]
                 : ICON_CLASS['allTo' + format.toUpperCase()]
 
-            return this.getButtonTemplate(iconClass, buttonText)
+            const button = document.createElement('li')
+            button.innerHTML = this.getButtonTemplate(iconClass, buttonText)
+            // add click event for each button
+            button.addEventListener('click', operations.exportToFile.bind(null, selectMode, format))
+            return button
         },
         getRPCButtonDom(type = 'settings') {
             const buttonText = utils.getTranslation(type === 'settings' ? 'aria2RpcSettings' : 'aria2RpcReset')
@@ -350,27 +356,23 @@
             const hrLine = document.createElement('li')
             hrLine.classList.add('border-b', 'border-gray-700')
 
-            const buttonConfigs = [
-                // txt buttons
+            const buttonForAllConfigs = [
                 { selectMode: false, format: EXPORT_FORMAT.txt },
-                { selectMode: true, format: EXPORT_FORMAT.txt },
-                // ef2 buttons
                 { selectMode: false, format: EXPORT_FORMAT.ef2 },
-                { selectMode: true, format: EXPORT_FORMAT.ef2 },
-                // aria2 buttons
                 { selectMode: false, format: EXPORT_FORMAT.aria2 },
+            ]
+
+            const buttonsForSelectedConfigs = [
+                { selectMode: true, format: EXPORT_FORMAT.txt },
+                { selectMode: true, format: EXPORT_FORMAT.ef2 },
                 { selectMode: true, format: EXPORT_FORMAT.aria2 },
             ]
 
             // map buttons (except aria2) to get button dom element
-            const buttons = buttonConfigs.map((config) => {
-                const button = document.createElement('li')
-                button.innerHTML = utils.getButtonDom(config.selectMode, config.format)
-                // add click event for each button
-                button.addEventListener('click', operations.exportToFile.bind(null, config.selectMode, config.format))
-                return button
-            })
+            const buttonsForAll = buttonForAllConfigs.map((config) => utils.getButtonDom(config))
+            const buttonsForSelected = buttonsForSelectedConfigs.map((config) => utils.getButtonDom(config))
 
+            // create rpc settings button
             const rpcSettingsButton = document.createElement('div')
             rpcSettingsButton.innerHTML = utils.getRPCButtonDom()
             // click rpc settings button to open modal
@@ -398,18 +400,19 @@
                 utils.resetRPCConfig()
             })
 
-            buttons.push(hrLine.cloneNode(true))
-            buttons.push(rpcSettingsButton)
-            buttons.push(rpcResetButton)
-
             const container = document.createElement('ul')
             // add class to container
             container.classList.add('pt-4', 'space-y-4', 'border-gray-700')
-            // add hr line
-            container.appendChild(hrLine.cloneNode(true))
             // append buttons to container
-            buttons.forEach((button) => container.appendChild(button))
-            // add container to sidebar
+            container.append(
+                hrLine.cloneNode(true),
+                ...buttonsForAll,
+                hrLine.cloneNode(true),
+                ...buttonsForSelected,
+                hrLine.cloneNode(true),
+                rpcSettingsButton,
+                rpcResetButton
+            )
             document.querySelector('#index_sidebar').appendChild(container)
         },
     }
@@ -421,7 +424,7 @@
 
             // add buttons to sidebar, watch if appdata.fileManager.mainContent.data is ready
             let interval = setInterval(() => {
-                if (appdata.fileManager.mainContent.data.children) {
+                if (appdata.fileManager.mainContent.data) {
                     operations.addButtonsToSidebar()
                     clearInterval(interval)
                 }
