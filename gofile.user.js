@@ -3,8 +3,8 @@
 // @name:en      GoFile Enhanced
 // @namespace    https://github.com/ewigl/gofile-enhanced
 // @version      0.5.0
-// @description  在 GoFile 文件页面添加一个按钮,导出当前页面全部文件下载链接。用以配合 IDM、aria2 等下载器使用。
-// @description:en Export all files' download link. Use along with IDM, aria2 and similar downloaders.
+// @description  在 GoFile 文件下载页面添加亿个按钮，导出文件下载链接。配合 IDM、aria2 等下载器使用。
+// @description:en Export files' download link. Use along with IDM, aria2 and similar downloaders.
 // @author       Licht
 // @license      MIT
 // @homepage     https://github.com/ewigl/gofile-enhanced
