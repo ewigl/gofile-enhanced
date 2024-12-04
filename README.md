@@ -19,6 +19,8 @@ https://github.com/user-attachments/assets/52f21044-82dc-40e4-a1fc-aa05cb43bce1
 -   支持 Gofile 最新 Api，适配网站最新 UI。
 -   Support for Gofile latest Api, plugin UI perfectly blended with new Gofile UI.
 
+    ![000](https://github.com/user-attachments/assets/c9203709-f56c-4f12-8606-c40fb6c8a87a)
+
 ### V 0.4.5
 
 -   更新支持 GoFile 网站新 Api，通知功能与 Aria2 配置面板暂不可用。
