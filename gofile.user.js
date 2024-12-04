@@ -2,7 +2,7 @@
 // @name         GoFile 增强
 // @name:en      GoFile Enhanced
 // @namespace    https://github.com/ewigl/gofile-enhanced
-// @version      0.4.6
+// @version      0.5.0
 // @description  在 GoFile 文件页面添加一个按钮,导出当前页面全部文件下载链接。用以配合 IDM、aria2 等下载器使用。
 // @description:en Export all files' download link. Use along with IDM, aria2 and similar downloaders.
 // @author       Licht
@@ -12,7 +12,6 @@
 // @icon         https://gofile.io/dist/img/favicon16.png
 // @connect      localhost
 // @connect      *
-// @grant        GM_addStyle
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
@@ -33,22 +32,12 @@
     // cookie: accountToken=ABCDEFG
     // >
 
-    const styleCSS = `
-    .gofile-enhanced-form {
-        display: grid;
-    }
-
-    .gofile-enhanced-form input {
-        margin: 0.5rem 0;
-    }
-    `
-
-    GM_addStyle(styleCSS)
-
     // constants
     const DEFAULT_LANGUAGE = 'en-US'
 
     const CRLF = '\r\n'
+
+    const ARIA2_RPC_TUTORIAL_URL = 'https://aria2.github.io/manual/en/html/aria2c.html#rpc-interface'
 
     const EXPORT_FORMAT = {
         // plain text
@@ -69,8 +58,8 @@
             selectedToTXT: '选中链接 -> TXT',
             allToEF2: '全部链接 -> IDM',
             selectedToEF2: '选中链接 -> IDM',
-            allToARIA2: '全部 -> Aria2 RPC',
-            selectedToARIA2: '选中 -> Aria2 RPC',
+            allToARIA2: '全部链接 -> Aria2',
+            selectedToARIA2: '选中链接 -> Aria2',
             aria2RpcSettings: 'Aria2 RPC 设置',
             aria2RpcReset: '重置 RPC 设置',
             // Notification
@@ -100,8 +89,8 @@
             selectedToTXT: 'Selected links -> TXT',
             allToEF2: 'All links -> IDM',
             selectedToEF2: 'Selected links -> IDM',
-            allToARIA2: 'All -> Aria2 RPC',
-            selectedToARIA2: 'Selected -> Aria2 RPC',
+            allToARIA2: 'All links -> Aria2',
+            selectedToARIA2: 'Selected links -> Aria2',
             aria2RpcSettings: 'Aria2 RPC Settings',
             aria2RpcReset: 'Reset RPC settings',
             // Notification
@@ -131,6 +120,12 @@
         rpcAddress: 'aria2_rpc_address',
         rpcSecret: 'aria2_rpc_secret',
         rpcDir: 'aria2_rpc_dir',
+    }
+
+    const ARIA2_RPC_CONFIG_ICONS = {
+        rpcAddress: 'fa-link',
+        rpcSecret: 'fa-key',
+        rpcDir: 'fa-folder',
     }
 
     const DEFAULT_CONFIG = {
@@ -208,15 +203,24 @@
         },
         getFormInputItemTemplate(name, i18nKey) {
             return `
-            <label for="${name}">
-                ${utils.getTranslation(i18nKey)}:
-            </label>
-            <input
-                type="text"
-                id="${name}"
-                name="${name}"
-                value="${utils.getValue(name)}"
-            >
+            <div class="space-y-2">
+                <label for="${name}" class="block text-sm font-medium text-gray-300">
+                    ${utils.getTranslation(i18nKey)}
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas ${ARIA2_RPC_CONFIG_ICONS[i18nKey]} text-gray-400"></i>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="${name}" 
+                        name="${name}" 
+                        class="w-full pl-10 pr-3 py-2 bg-gray-700 rounded-lg border border-gray-600 focus:ring-2
+                            focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition duration-200 text-white placeholder-gray-400"
+                        value="${utils.getValue(name)}"
+                    >
+                </div>
+            </div>
             `
         },
         getButtonDom(config) {
@@ -243,11 +247,33 @@
         },
         getRPCSettingsDom() {
             return `
-            <form id="gofile-enhanced-form" name="gofile-enhanced-form" class="gofile-enhanced-form" action="/" method="dialog">
+            <div class="space-y-4">
+                <div class="bg-blue-900 bg-opacity-20 border border-blue-800 rounded-lg p-4">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-info-circle text-blue-400 text-xl"></i>
+                        <p class="text-gray-300 text-sm">
+                            <a href="${ARIA2_RPC_TUTORIAL_URL}" target="_blank" rel="noopener noreferrer"> ${ARIA2_RPC_TUTORIAL_URL} </a>
+                        </p>
+                    </div>
+                </div>
+
+                <form id="GofileEnhanced_Form" class="space-y-4">
+
                 ${Object.keys(ARIA2_RPC_CONFIG_KEY)
                     .map((key) => this.getFormInputItemTemplate(ARIA2_RPC_CONFIG_KEY[key], key))
                     .join('')}
-            </form>
+
+                    <button
+                        id="GofileEnhanced_RPC_Submit"
+                        type="submit"
+                        class="w-full py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-300 
+                            ease-in-out text-center text-white font-semibold flex items-center justify-center space-x-2"
+                    >
+                        <i class="fas fa-check"></i>
+                        <span> ${utils.getTranslation('ok')} </span>
+                    </button>
+                </form>
+            </div>
             `
         },
     }
@@ -376,22 +402,12 @@
             const rpcSettingsButton = document.createElement('div')
             rpcSettingsButton.innerHTML = utils.getRPCButtonDom()
             // click rpc settings button to open modal
-            rpcSettingsButton.addEventListener('click', () => {
-                createModal({
-                    modalTitle: utils.getTranslation('aria2RpcSettings'),
-                    modalBody: utils.getRPCSettingsDom(),
-                    modalYesLabel: utils.getTranslation('ok'),
-                    modalCallback: () => {
-                        // if click ok button
-                        const form = document.forms['gofile-enhanced-form']
-
-                        // TODO
-                        Object.keys(ARIA2_RPC_CONFIG_KEY).forEach((key) => {
-                            utils.setValue(ARIA2_RPC_CONFIG_KEY[key], form.elements[ARIA2_RPC_CONFIG_KEY[key]].value)
-                        })
-                    },
+            rpcSettingsButton.addEventListener('click', () =>
+                createPopup({
+                    title: utils.getTranslation('aria2RpcSettings'),
+                    content: utils.getRPCSettingsDom(),
                 })
-            })
+            )
 
             const rpcResetButton = document.createElement('div')
             rpcResetButton.innerHTML = utils.getRPCButtonDom('reset')
@@ -415,6 +431,20 @@
             )
             document.querySelector('#index_sidebar').appendChild(container)
         },
+        addRPCSubmitEventListener() {
+            document.addEventListener('click', function (event) {
+                if (event.target.matches('#GofileEnhanced_RPC_Submit')) {
+                    event.preventDefault()
+                    const form = document.forms['GofileEnhanced_Form']
+                    // To be optimized
+                    Object.keys(ARIA2_RPC_CONFIG_KEY).forEach((key) => {
+                        utils.setValue(ARIA2_RPC_CONFIG_KEY[key], form.elements[ARIA2_RPC_CONFIG_KEY[key]].value)
+                    })
+
+                    closePopup()
+                }
+            })
+        },
     }
 
     const main = {
@@ -422,13 +452,23 @@
             // init RPC config
             utils.initDefaultConfig()
 
-            // add buttons to sidebar, watch if appdata.fileManager.mainContent.data is ready
-            let interval = setInterval(() => {
+            // add aria2 rpc submit event listener
+            operations.addRPCSubmitEventListener()
+
+            // check if appdata.fileManager.mainContent.data is ready
+            let countTimeOut = 0
+            const interval = setInterval(() => {
                 if (appdata.fileManager.mainContent.data) {
                     operations.addButtonsToSidebar()
                     clearInterval(interval)
+                } else {
+                    // 30s timeout, if appdata.fileManager.mainContent.data is still not ready
+                    if (countTimeOut > 59) {
+                        clearInterval(interval)
+                    }
+                    countTimeOut++
                 }
-            }, 640)
+            }, 500)
         },
     }
 
