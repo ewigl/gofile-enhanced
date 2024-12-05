@@ -2,7 +2,7 @@
 // @name         GoFile 增强
 // @name:en      GoFile Enhanced
 // @namespace    https://github.com/ewigl/gofile-enhanced
-// @version      0.5.0
+// @version      0.5.2
 // @description  在 GoFile 文件下载页面添加亿个按钮，导出文件下载链接。配合 IDM、aria2 等下载器使用。
 // @description:en Export files' download link. Use along with IDM, aria2 and similar downloaders.
 // @author       Licht
@@ -48,6 +48,8 @@
         // aria2
         aria2: 'aria2',
     }
+
+    const GE_CONTAINER_ID = 'GofileEnhanced_Container'
 
     // const FOLDER_TYPE = 'folder'
     const FILE_TYPE = 'file'
@@ -167,7 +169,10 @@
                 utils.getValue(item.name) === undefined && utils.setValue(item.name, item.value)
             })
         },
-        getTranslation: (key) => I18N[navigator.language || DEFAULT_LANGUAGE][key],
+        getTranslation(key) {
+            const lang = I18N[navigator.language] ? navigator.language : DEFAULT_LANGUAGE
+            return I18N[lang][key] || key // fallback to key
+        },
         getToken: () => document.cookie,
         getAria2RpcConfig() {
             return {
@@ -277,6 +282,11 @@
             </div>
             `
         },
+        getHrLine() {
+            const hrLine = document.createElement('li')
+            hrLine.classList.add('border-b', 'border-gray-700')
+            return hrLine
+        },
     }
 
     const operations = {
@@ -376,8 +386,6 @@
         },
         addButtonsToSidebar() {
             // boeder line
-            const hrLine = document.createElement('li')
-            hrLine.classList.add('border-b', 'border-gray-700')
 
             const buttonForAllConfigs = [
                 { selectMode: false, format: EXPORT_FORMAT.txt },
@@ -399,13 +407,25 @@
             const rpcSettingsButton = document.createElement('div')
             rpcSettingsButton.innerHTML = utils.getRPCButtonDom()
             // click rpc settings button to open modal
-            rpcSettingsButton.addEventListener('click', () =>
+            rpcSettingsButton.addEventListener('click', () => {
                 createPopup({
                     title: utils.getTranslation('aria2RpcSettings'),
                     content: utils.getRPCSettingsDom(),
                     icon: 'fas fa-gears',
                 })
-            )
+
+                const form = document.forms['GofileEnhanced_Form']
+
+                if (form) {
+                    form.addEventListener('submit', (event) => {
+                        event.preventDefault()
+                        Object.keys(ARIA2_RPC_CONFIG_KEY).forEach((key) => {
+                            utils.setValue(ARIA2_RPC_CONFIG_KEY[key], form.elements[ARIA2_RPC_CONFIG_KEY[key]].value)
+                        })
+                        closePopup()
+                    })
+                }
+            })
 
             const rpcResetButton = document.createElement('div')
             rpcResetButton.innerHTML = utils.getRPCButtonDom('reset')
@@ -416,34 +436,20 @@
 
             const container = document.createElement('ul')
             // add id
-            container.id = 'GofileEnhanced_Container'
+            container.id = GE_CONTAINER_ID
             // add class to container
             container.classList.add('pt-4', 'space-y-4', 'border-gray-700')
             // append buttons to container
             container.append(
-                hrLine.cloneNode(true),
+                utils.getHrLine(),
                 ...buttonsForAll,
-                hrLine.cloneNode(true),
+                utils.getHrLine(),
                 ...buttonsForSelected,
-                hrLine.cloneNode(true),
+                utils.getHrLine(),
                 rpcSettingsButton,
                 rpcResetButton
             )
             document.querySelector('#index_sidebar').appendChild(container)
-        },
-        addRPCSubmitEventListener() {
-            document.addEventListener('click', function (event) {
-                if (event.target.matches('#GofileEnhanced_RPC_Submit')) {
-                    event.preventDefault()
-                    const form = document.forms['GofileEnhanced_Form']
-                    // To be optimized
-                    Object.keys(ARIA2_RPC_CONFIG_KEY).forEach((key) => {
-                        utils.setValue(ARIA2_RPC_CONFIG_KEY[key], form.elements[ARIA2_RPC_CONFIG_KEY[key]].value)
-                    })
-
-                    closePopup()
-                }
-            })
         },
     }
 
@@ -452,12 +458,9 @@
             // init RPC config
             utils.initDefaultConfig()
 
-            // add aria2 rpc submit event listener
-            operations.addRPCSubmitEventListener()
-
             // observe changes to the DOM
             const observer = new MutationObserver((_mutations, _obs) => {
-                const container = document.getElementById('GofileEnhanced_Container')
+                const container = document.getElementById(GE_CONTAINER_ID)
 
                 if (appdata.fileManager?.mainContent?.data) {
                     !container && operations.addButtonsToSidebar()
@@ -472,7 +475,11 @@
             // Ovserve the target node "#index_main", which is in the DOM initially.
             const targetNode = document.getElementById('index_main')
             const config = { childList: true, subtree: true }
-            observer.observe(targetNode, config)
+            if (targetNode) {
+                observer.observe(targetNode, config)
+            } else {
+                console.log('#index_main not found.')
+            }
         },
     }
 
