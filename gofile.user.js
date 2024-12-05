@@ -60,8 +60,8 @@
             selectedToEF2: '选中链接 -> IDM',
             allToARIA2: '全部链接 -> Aria2',
             selectedToARIA2: '选中链接 -> Aria2',
-            aria2RpcSettings: 'Aria2 RPC 设置',
-            aria2RpcReset: '重置 RPC 设置',
+            aria2RpcSettings: '配置 Aria2 RPC',
+            aria2RpcReset: '重置 Aria2 RPC',
             // Notification
             noFileSelected: '未选中任何文件',
             noFileSelectedDescription: '请先选中文件',
@@ -92,7 +92,7 @@
             allToARIA2: 'All links -> Aria2',
             selectedToARIA2: 'Selected links -> Aria2',
             aria2RpcSettings: 'Aria2 RPC Settings',
-            aria2RpcReset: 'Reset RPC settings',
+            aria2RpcReset: 'Aria2 RPC Reset',
             // Notification
             noFileSelected: 'No file selected',
             noFileSelectedDescription: 'Please select files first',
@@ -406,6 +406,7 @@
                 createPopup({
                     title: utils.getTranslation('aria2RpcSettings'),
                     content: utils.getRPCSettingsDom(),
+                    icon: 'fas fa-gears',
                 })
             )
 
