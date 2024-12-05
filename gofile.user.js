@@ -8,7 +8,7 @@
 // @author       Licht
 // @license      MIT
 // @homepage     https://github.com/ewigl/gofile-enhanced
-// @match        http*://gofile.io/d/*
+// @match        http*://gofile.io/*
 // @icon         https://gofile.io/dist/img/favicon16.png
 // @connect      localhost
 // @connect      *
@@ -25,6 +25,7 @@
 
     // function createNotification(title, message, type = 'success', duration = 3000)
     // function createPopup({ title, content, icon = null, backgroundOpacity = true, showCloseButton = true })
+    // function createAlert(type, content)
 
     // IDM Exported Format (support CRLF(\r\n) only):
     // <
@@ -418,6 +419,8 @@
             })
 
             const container = document.createElement('ul')
+            // add id
+            container.id = 'GofileEnhanced_Container'
             // add class to container
             container.classList.add('pt-4', 'space-y-4', 'border-gray-700')
             // append buttons to container
@@ -456,20 +459,24 @@
             // add aria2 rpc submit event listener
             operations.addRPCSubmitEventListener()
 
-            // check if appdata.fileManager.mainContent.data is ready
-            let countTimeOut = 0
-            const interval = setInterval(() => {
-                if (appdata.fileManager.mainContent.data) {
-                    operations.addButtonsToSidebar()
-                    clearInterval(interval)
+            // observe changes to the DOM
+            const observer = new MutationObserver((_mutations, _obs) => {
+                const container = document.getElementById('GofileEnhanced_Container')
+
+                if (appdata.fileManager?.mainContent?.data) {
+                    !container && operations.addButtonsToSidebar()
+                    // Stop observing
+                    // obs.disconnect()
                 } else {
-                    // 30s timeout, if appdata.fileManager.mainContent.data is still not ready
-                    if (countTimeOut > 59) {
-                        clearInterval(interval)
-                    }
-                    countTimeOut++
+                    // remove GofileEnhanced_Container
+                    container && container.remove()
                 }
-            }, 500)
+            })
+
+            // Ovserve the target node "#index_main", which is in the DOM initially.
+            const targetNode = document.getElementById('index_main')
+            const config = { childList: true, subtree: true }
+            observer.observe(targetNode, config)
         },
     }
 
