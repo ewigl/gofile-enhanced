@@ -356,25 +356,21 @@
                                 }
                             })
                         } catch (error) {
-                            createNotification(utils.getTranslation('fail'), error.toString(), 'error')
+                            createAlert('error', error.toString())
                         }
                     } else {
-                        createNotification(
-                            utils.getTranslation('fail'),
-                            `${utils.getTranslation('rpcSendFailed')} / ${httpRes.status} - ${httpRes.statusText}`,
-                            'error'
+                        createAlert(
+                            'error',
+                            `${utils.getTranslation('rpcSendFailed')} / ${httpRes.status} - ${httpRes.statusText}`
                         )
                     }
                 },
                 onerror: (error) => {
-                    createNotification(utils.getTranslation('fail'), JSON.stringify(error), 'error')
+                    // createNotification(utils.getTranslation('fail'), JSON.stringify(error), 'error')
+                    createAlert('error', JSON.stringify(error))
                 },
                 onabort: () => {
-                    createNotification(
-                        utils.getTranslation('fail'),
-                        utils.getTranslation('unknownError') + ' / (abort)',
-                        'error'
-                    )
+                    createAlert('error', utils.getTranslation('unknownError') + ' / (abort)')
                 },
             })
         },
