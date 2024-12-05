@@ -4,50 +4,34 @@
 
 [Greasy Fork](https://greasyfork.org/zh-CN/scripts/515250-gofile-%E5%A2%9E%E5%BC%BA)
 
--   批量下载文件用。/ For batch downloading files.
+批量下载 Gofile 文件。
 
----
+Download Gofiles in batches.
+
+![000](https://github.com/user-attachments/assets/c9203709-f56c-4f12-8606-c40fb6c8a87a)
 
 ### 演示视频 / Demo Video
 
 https://github.com/user-attachments/assets/52f21044-82dc-40e4-a1fc-aa05cb43bce1
 
----
-
 ### V 0.5 +
 
 -   支持 Gofile 最新 Api，适配网站最新 UI。
--   Support for Gofile latest Api, plugin UI perfectly blended with new Gofile UI.
 
-    ![000](https://github.com/user-attachments/assets/c9203709-f56c-4f12-8606-c40fb6c8a87a)
+    English UI support.
 
-### V 0.4.5
+-   支持 Aira2。通过 RPC 直接将下载任务交给 Aria2。
 
--   更新支持 GoFile 网站新 Api，通知功能与 Aria2 配置面板暂不可用。
--   Update support for GoFile new Api, notification feature and aria2 config panel is not available now.
+    Aria2 support. Send download tasks directly to Aria2 using RPC.
 
-### V 0.4 +
+-   导出 IDM(Internet Download Manager) 专用格式 - 后缀为 ef2 的文件。（任务 -> 导入 -> 从"IDM 导出文件"导入）。
 
--   添加 Aira2 支持。通过 RPC 直接将下载任务交给 Aria2。
+    Export links to IDM format, with suffix of ef2.(Tasks -> Import -> From IDM Export File)
 
--   Add Aria2 support. Send download tasks directly to Aria2.
+-   导出当前页面已选中文件的下载链接。（不包含文件夹，按选中顺序排序）
 
-### V 0.3+
+    Export selected files's links into a txt file. (Folders not included, sort by selected time.)
 
--   现在可以导出 IDM 专用格式 - 后缀为 ef2 的文件。导入 IDM 时选择从"IDM 导出文件"导入。
+-   导出当前页面全部文件的下载链接。（不包含文件夹，按日期排序）
 
--   Now you can export links to IDM format, with suffix of ef2.
-
-### V 0.2+
-
--   左侧栏添加一个按钮，导出当前页面已选中文件的下载链接到一个 txt 文件。（不包含文件夹，按选中顺序排序）
-
--   Add a button to export links to selected files into a txt file. (Folders not included, sort by selected time.)
-
-### V 0.1+
-
--   左侧栏添加一个按钮，导出当前页面全部文件的下载链接到一个 txt 文件。（不包含文件夹，按日期排序）
--   导出后的链接可以配合 IDM 等下载工具使用。
-
--   Add a button to export links to all files into a txt file. (Folders not included, sort by date.)
--   Exported links can be used in IDM, aria2 and similar downloaders.
+    Export links to all files into a txt file. (Folders not included, sort by date.)
