@@ -309,8 +309,10 @@
                 return operations.sendToRPC(fileKeys.map((key) => appdata.fileManager.mainContent.data.children[key].link))
             }
 
+            const cookie = utils.getToken()
+
             const formatMap = {
-                [EXPORT_FORMAT.ef2]: (item) => `<${CRLF}${item.link}${CRLF}cookie: ${utils.getToken()}${CRLF}>${CRLF}`,
+                [EXPORT_FORMAT.ef2]: (item) => `<${CRLF}${item.link}${CRLF}cookie: ${cookie}${CRLF}>${CRLF}`,
                 [EXPORT_FORMAT.txt]: (item) => `${item.link}${CRLF}`,
             }
 
@@ -324,7 +326,9 @@
             utils.downloadFile(links, format)
         },
         sendToRPC: async (fileLinks = []) => {
-            const rpcConfig = utils.getAria2RpcConfig()
+            const { secret, dir } = utils.getAria2RpcConfig()
+
+            const header = [`Cookie: ${utils.getToken()}`]
 
             const rpcData = fileLinks.map((link) => {
                 return {
@@ -332,11 +336,11 @@
                     jsonrpc: '2.0',
                     method: 'aria2.addUri',
                     params: [
-                        `token:${rpcConfig.secret}`,
+                        `token:${secret}`,
                         [link],
                         {
-                            header: [`Cookie: ${utils.getToken()}`],
-                            dir: rpcConfig.dir,
+                            header,
+                            dir,
                         },
                     ],
                 }
