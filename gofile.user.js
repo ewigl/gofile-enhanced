@@ -41,8 +41,6 @@
     const ARIA2_RPC_TUTORIAL_URL = 'https://aria2.github.io/manual/en/html/aria2c.html#rpc-interface'
 
     const EXPORT_FORMAT = {
-        // plain text
-        txt: 'txt',
         // IDM
         ef2: 'ef2',
         // aria2
@@ -57,8 +55,6 @@
     const I18N = {
         'zh-CN': {
             // Button
-            allToTXT: '全部链接 -> TXT',
-            selectedToTXT: '选中链接 -> TXT',
             allToEF2: '全部链接 -> IDM',
             selectedToEF2: '选中链接 -> IDM',
             allToARIA2: '全部链接 -> Aria2',
@@ -88,8 +84,6 @@
         },
         'en-US': {
             // Button
-            allToTXT: 'All links -> TXT',
-            selectedToTXT: 'Selected links -> TXT',
             allToEF2: 'All links -> IDM',
             selectedToEF2: 'Selected links -> IDM',
             allToARIA2: 'All links -> Aria2',
@@ -149,10 +143,8 @@
     }
 
     const ICON_CLASS = {
-        allToTXT: 'fas fa-clone',
         allToEF2: 'fas fa-paper-plane',
         allToARIA2: 'fas fa-circle-down',
-        selectedToTXT: 'far fa-clone',
         selectedToEF2: 'far fa-paper-plane',
         selectedToARIA2: 'far fa-circle-down',
         aria2RpcSettings: 'fas fa-gear',
@@ -194,7 +186,7 @@
             })
             // for each DEFAULT_CONFIG.rpcSettings
         },
-        downloadFile(links, format = 'txt') {
+        downloadFile(links, format = 'ef2') {
             const blob = new Blob([links], { type: 'text/plain;charset=utf-8' })
             const url = URL.createObjectURL(blob)
             const link = document.createElement('a')
@@ -230,7 +222,7 @@
             `
         },
         getButtonDom(config) {
-            const { selectMode = false, format = 'txt' } = config
+            const { selectMode = false, format = 'ef2' } = config
 
             const buttonText = utils.getTranslation(
                 selectMode ? 'selectedTo' + format.toUpperCase() : 'allTo' + format.toUpperCase()
@@ -290,7 +282,7 @@
     }
 
     const operations = {
-        exportToFile(selectMode = false, format = 'txt') {
+        exportToFile(selectMode = false, format = 'ef2') {
             const objectKeys = Object.keys(
                 selectMode ? appdata.fileManager.contentsSelected : appdata.fileManager.mainContent.data.children
             )
@@ -313,7 +305,6 @@
 
             const formatMap = {
                 [EXPORT_FORMAT.ef2]: (item) => `<${CRLF}${item.link}${CRLF}cookie: ${cookie}${CRLF}>${CRLF}`,
-                [EXPORT_FORMAT.txt]: (item) => `${item.link}${CRLF}`,
             }
 
             const links = fileKeys
@@ -392,13 +383,11 @@
             // boeder line
 
             const buttonForAllConfigs = [
-                { selectMode: false, format: EXPORT_FORMAT.txt },
                 { selectMode: false, format: EXPORT_FORMAT.ef2 },
                 { selectMode: false, format: EXPORT_FORMAT.aria2 },
             ]
 
             const buttonsForSelectedConfigs = [
-                { selectMode: true, format: EXPORT_FORMAT.txt },
                 { selectMode: true, format: EXPORT_FORMAT.ef2 },
                 { selectMode: true, format: EXPORT_FORMAT.aria2 },
             ]
