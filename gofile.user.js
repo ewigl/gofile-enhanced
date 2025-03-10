@@ -317,7 +317,7 @@
             utils.downloadFile(links, format)
         },
         sendToRPC: async (fileLinks = []) => {
-            const { secret, dir } = utils.getAria2RpcConfig()
+            const { address, secret, dir } = utils.getAria2RpcConfig()
 
             const header = [`Cookie: ${utils.getToken()}`]
 
@@ -339,7 +339,7 @@
 
             GM_xmlhttpRequest({
                 method: 'POST',
-                url: rpcConfig.address,
+                url: address,
                 data: JSON.stringify(rpcData),
                 onload: (httpRes) => {
                     if (httpRes.status === 200) {
