@@ -2,7 +2,7 @@
 // @name         GoFile 增强
 // @name:en      GoFile Enhanced
 // @namespace    https://github.com/ewigl/gofile-enhanced
-// @version      0.5.3
+// @version      0.6.0
 // @description  在 GoFile 文件下载页面添加亿个按钮，导出文件下载链接。配合 IDM、aria2 等下载器使用。
 // @description:en Export files' download link. Use along with IDM, aria2 and similar downloaders.
 // @author       Licht
@@ -20,18 +20,22 @@
 ;(function () {
     'use strict'
 
-    // New Api
+    // Api
     // appdata: literally, app data
 
+    // Funcs
     // function createNotification(title, message, type = 'success', duration = 3000)
     // function createPopup({ title, content, icon = null, backgroundOpacity = true, showCloseButton = true })
     // function createAlert(type, content)
 
+    // Formats
+    //
     // IDM Exported Format (support CRLF(\r\n) only):
     // <
     // url
     // cookie: accountToken=ABCDEFG
     // >
+    //
 
     // constants
     const DEFAULT_LANGUAGE = 'en-US'
@@ -40,12 +44,10 @@
 
     const ARIA2_RPC_TUTORIAL_URL = 'https://aria2.github.io/manual/en/html/aria2c.html#rpc-interface'
 
-    const EXPORT_FORMAT = {
-        // IDM
-        ef2: 'ef2',
-        // aria2
-        aria2: 'aria2',
-    }
+    const SUPPORTED_FORMATS = [
+        { name: 'IDM', value: 'ef2' },
+        { name: 'Aria2', value: 'rpc' },
+    ]
 
     const GE_CONTAINER_ID = 'GofileEnhanced_Container'
 
@@ -55,12 +57,12 @@
     const I18N = {
         'zh-CN': {
             // Button
-            allToEF2: '全部链接 -> IDM',
-            selectedToEF2: '选中链接 -> IDM',
-            allToARIA2: '全部链接 -> Aria2',
-            selectedToARIA2: '选中链接 -> Aria2',
-            aria2RpcSettings: '配置 Aria2 RPC',
-            aria2RpcReset: '重置 Aria2 RPC',
+            exportAll: '导出全部',
+            exportSelected: '导出选中',
+            sendAll: '发送全部',
+            sendSelected: '发送选中',
+            aria2RpcSettings: '配置 RPC',
+            aria2RpcReset: '重置 RPC',
             // Notification
             noFileSelected: '未选中任何文件',
             noFileSelectedDescription: '请先选中文件',
@@ -84,12 +86,12 @@
         },
         'en-US': {
             // Button
-            allToEF2: 'All links -> IDM',
-            selectedToEF2: 'Selected links -> IDM',
-            allToARIA2: 'All links -> Aria2',
-            selectedToARIA2: 'Selected links -> Aria2',
-            aria2RpcSettings: 'Aria2 RPC Settings',
-            aria2RpcReset: 'Aria2 RPC Reset',
+            exportAll: 'Export All',
+            exportSelected: 'Export Selected',
+            sendAll: 'Send All',
+            sendSelected: 'Send Selected',
+            aria2RpcSettings: 'RPC Settings',
+            aria2RpcReset: 'RPC Reset',
             // Notification
             noFileSelected: 'No file selected',
             noFileSelectedDescription: 'Please select files first',
@@ -143,10 +145,9 @@
     }
 
     const ICON_CLASS = {
-        allToEF2: 'fas fa-paper-plane',
-        allToARIA2: 'fas fa-circle-down',
-        selectedToEF2: 'far fa-paper-plane',
-        selectedToARIA2: 'far fa-circle-down',
+        gofileEnhanced: 'fa-brands fa-google-plus',
+        exportAll: 'fas fa-circle-down',
+        exportSelected: 'far fa-circle-down',
         aria2RpcSettings: 'fas fa-gear',
         aria2RpcReset: 'fas fa-rotate-left',
     }
@@ -156,15 +157,18 @@
         setValue(name, value) {
             GM_setValue(name, value)
         },
+        // init default configs if not exists
         initDefaultConfig() {
             DEFAULT_CONFIG.rpcSettings.forEach((item) => {
                 utils.getValue(item.name) === undefined && utils.setValue(item.name, item.value)
             })
         },
+        // get translation by key
         getTranslation(key) {
             const lang = I18N[navigator.language] ? navigator.language : DEFAULT_LANGUAGE
             return I18N[lang][key] || key // fallback to key
         },
+        // get token from cookie
         getToken: () => document.cookie,
         getAria2RpcConfig() {
             return {
@@ -186,135 +190,15 @@
             })
             // for each DEFAULT_CONFIG.rpcSettings
         },
-        downloadFile(links, format = 'ef2') {
+        downloadFile(links, format) {
             const blob = new Blob([links], { type: 'text/plain;charset=utf-8' })
             const url = URL.createObjectURL(blob)
             const link = document.createElement('a')
             link.href = url
-            // generate file neme by timestamp
-            link.download = `${appdata.fileManager.mainContent.data.name} - ${new Date().getTime()}.${format}`
+            // generate file name by timestamp
+            link.download = `${appdata.fileManager.mainContent.data.name} - ${new Date().getTime()}.${format.value}`
             link.click()
             URL.revokeObjectURL(url)
-        },
-        getButtonTemplate(iconClass, buttonText) {
-            return `<a href="javascript:void(0)" id="index_GofileEnhanced" class="hover:text-blue-500 flex items-center gap-2" aria-label="${buttonText}"><i class="${iconClass}"></i> ${buttonText} </a>`
-        },
-        getFormInputItemTemplate(name, i18nKey) {
-            return `
-            <div class="space-y-2">
-                <label for="${name}" class="block text-sm font-medium text-gray-300">
-                    ${utils.getTranslation(i18nKey)}
-                </label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fas ${ARIA2_RPC_CONFIG_ICONS[i18nKey]} text-gray-400"></i>
-                    </div>
-                    <input 
-                        type="text" 
-                        id="${name}" 
-                        name="${name}" 
-                        class="w-full pl-10 pr-3 py-2 bg-gray-700 rounded-lg border border-gray-600 focus:ring-2
-                            focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition duration-200 text-white placeholder-gray-400"
-                        value="${utils.getValue(name)}"
-                    >
-                </div>
-            </div>
-            `
-        },
-        getButtonDom(config) {
-            const { selectMode = false, format = 'ef2' } = config
-
-            const buttonText = utils.getTranslation(
-                selectMode ? 'selectedTo' + format.toUpperCase() : 'allTo' + format.toUpperCase()
-            )
-            const iconClass = selectMode
-                ? ICON_CLASS['selectedTo' + format.toUpperCase()]
-                : ICON_CLASS['allTo' + format.toUpperCase()]
-
-            const button = document.createElement('li')
-            button.innerHTML = this.getButtonTemplate(iconClass, buttonText)
-            // add click event for each button
-            button.addEventListener('click', operations.exportToFile.bind(null, selectMode, format))
-            return button
-        },
-        getRPCButtonDom(type = 'settings') {
-            const buttonText = utils.getTranslation(type === 'settings' ? 'aria2RpcSettings' : 'aria2RpcReset')
-            const iconClass = type === 'settings' ? ICON_CLASS.aria2RpcSettings : ICON_CLASS.aria2RpcReset
-
-            return this.getButtonTemplate(iconClass, buttonText)
-        },
-        getRPCSettingsDom() {
-            return `
-            <div class="space-y-4">
-                <div class="bg-blue-900 bg-opacity-20 border border-blue-800 rounded-lg p-4">
-                    <div class="flex items-center space-x-3">
-                        <i class="fas fa-info-circle text-blue-400 text-xl"></i>
-                        <p class="text-gray-300 text-sm">
-                            <a href="${ARIA2_RPC_TUTORIAL_URL}" target="_blank" rel="noopener noreferrer"> ${ARIA2_RPC_TUTORIAL_URL} </a>
-                        </p>
-                    </div>
-                </div>
-
-                <form id="GofileEnhanced_Form" class="space-y-4">
-
-                ${Object.keys(ARIA2_RPC_CONFIG_KEY)
-                    .map((key) => this.getFormInputItemTemplate(ARIA2_RPC_CONFIG_KEY[key], key))
-                    .join('')}
-
-                    <button
-                        id="GofileEnhanced_RPC_Submit"
-                        type="submit"
-                        class="w-full py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-300 
-                            ease-in-out text-center text-white font-semibold flex items-center justify-center space-x-2"
-                    >
-                        <i class="fas fa-check"></i>
-                        <span> ${utils.getTranslation('ok')} </span>
-                    </button>
-                </form>
-            </div>
-            `
-        },
-        getHrLine() {
-            const hrLine = document.createElement('li')
-            hrLine.classList.add('border-b', 'border-gray-700')
-            return hrLine
-        },
-    }
-
-    const operations = {
-        exportToFile(selectMode = false, format = 'ef2') {
-            const objectKeys = Object.keys(
-                selectMode ? appdata.fileManager.contentsSelected : appdata.fileManager.mainContent.data.children
-            )
-
-            const fileKeys = objectKeys.filter((key) => appdata.fileManager.mainContent.data.children[key].type === FILE_TYPE)
-
-            if (fileKeys.length === 0) {
-                return createNotification(
-                    selectMode ? utils.getTranslation('noFileSelected') : utils.getTranslation('noFiles'),
-                    selectMode ? utils.getTranslation('noFileSelectedDescription') : utils.getTranslation('noFilesDescription'),
-                    'warning'
-                )
-            }
-
-            if (format === EXPORT_FORMAT.aria2) {
-                return operations.sendToRPC(fileKeys.map((key) => appdata.fileManager.mainContent.data.children[key].link))
-            }
-
-            const cookie = utils.getToken()
-
-            const formatMap = {
-                [EXPORT_FORMAT.ef2]: (item) => `<${CRLF}${item.link}${CRLF}cookie: ${cookie}${CRLF}>${CRLF}`,
-            }
-
-            const links = fileKeys
-                .map((key) => {
-                    const item = appdata.fileManager.mainContent.data.children[key]
-                    return formatMap[format](item)
-                })
-                .join('')
-
-            utils.downloadFile(links, format)
         },
         sendToRPC: async (fileLinks = []) => {
             const { address, secret, dir } = utils.getAria2RpcConfig()
@@ -379,26 +263,52 @@
                 },
             })
         },
-        addButtonsToSidebar() {
-            // boeder line
+        getHrLine() {
+            const hrLine = document.createElement('li')
+            hrLine.classList.add('border-b', 'border-gray-700')
+            return hrLine
+        },
+        getButtonTemplate(iconClass, buttonText) {
+            return `
+            <a href="javascript:void(0)" id="index_GofileEnhanced" class="hover:text-blue-500 flex items-center gap-2" aria-label="${buttonText}">
+                <i class="${iconClass}"></i>
+                ${buttonText}
+            </a>
+            `
+        },
+        getRegularButtons(format) {
+            // Header Title
+            const formatTitleElement = document.createElement('li')
+            formatTitleElement.innerHTML = `
+            <span class="flex items-center gap-2 text-blue-500 font-bold">
+                <i class="${ICON_CLASS.gofileEnhanced}"></i>
+                ${format.name}
+            </span>
+            `
 
-            const buttonForAllConfigs = [
-                { selectMode: false, format: EXPORT_FORMAT.ef2 },
-                { selectMode: false, format: EXPORT_FORMAT.aria2 },
-            ]
+            // buttonText
+            const exportAllText = format.name === 'Aria2' ? utils.getTranslation('sendAll') : utils.getTranslation('exportAll')
+            const exportSelectedText =
+                format.name === 'Aria2' ? utils.getTranslation('sendSelected') : utils.getTranslation('exportSelected')
 
-            const buttonsForSelectedConfigs = [
-                { selectMode: true, format: EXPORT_FORMAT.ef2 },
-                { selectMode: true, format: EXPORT_FORMAT.aria2 },
-            ]
+            // create export buttons
+            const exportAllButton = document.createElement('li')
+            const exportSelectedButton = document.createElement('li')
 
-            // map buttons (except aria2) to get button dom element
-            const buttonsForAll = buttonForAllConfigs.map((config) => utils.getButtonDom(config))
-            const buttonsForSelected = buttonsForSelectedConfigs.map((config) => utils.getButtonDom(config))
+            // set innerHTML
+            exportAllButton.innerHTML = this.getButtonTemplate(ICON_CLASS.exportAll, exportAllText)
+            exportSelectedButton.innerHTML = this.getButtonTemplate(ICON_CLASS.exportSelected, exportSelectedText)
 
+            // add click event for each button
+            exportAllButton.addEventListener('click', operations.handleExport.bind(null, false, format))
+            exportSelectedButton.addEventListener('click', operations.handleExport.bind(null, true, format))
+
+            return [formatTitleElement, exportAllButton, exportSelectedButton]
+        },
+        getAria2Buttons() {
             // create rpc settings button
             const rpcSettingsButton = document.createElement('div')
-            rpcSettingsButton.innerHTML = utils.getRPCButtonDom()
+            rpcSettingsButton.innerHTML = utils.getRPCButtonDom('settings')
             // click rpc settings button to open modal
             rpcSettingsButton.addEventListener('click', () => {
                 createPopup({
@@ -427,36 +337,157 @@
                 utils.resetRPCConfig()
             })
 
+            return [rpcSettingsButton, rpcResetButton]
+        },
+        getRPCButtonDom(type) {
+            const buttonText = utils.getTranslation(type === 'settings' ? 'aria2RpcSettings' : 'aria2RpcReset')
+            const iconClass = type === 'settings' ? ICON_CLASS.aria2RpcSettings : ICON_CLASS.aria2RpcReset
+
+            return this.getButtonTemplate(iconClass, buttonText)
+        },
+        getFormInputItemTemplate(name, i18nKey) {
+            return `
+            <div class="space-y-2">
+                <label for="${name}" class="block text-sm font-medium text-gray-300">
+                    ${utils.getTranslation(i18nKey)}
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas ${ARIA2_RPC_CONFIG_ICONS[i18nKey]} text-gray-400"></i>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="${name}" 
+                        name="${name}" 
+                        class="w-full pl-10 pr-3 py-2 bg-gray-700 rounded-lg border border-gray-600 focus:ring-2
+                            focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition duration-200 text-white placeholder-gray-400"
+                        value="${utils.getValue(name)}"
+                    >
+                </div>
+            </div>
+            `
+        },
+        getRPCSettingsDom() {
+            return `
+            <div class="space-y-4">
+                <div class="bg-blue-900 bg-opacity-20 border border-blue-800 rounded-lg p-4">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-info-circle text-blue-400 text-xl"></i>
+                        <p class="text-gray-300 text-sm">
+                            <a href="${ARIA2_RPC_TUTORIAL_URL}" target="_blank" rel="noopener noreferrer"> ${ARIA2_RPC_TUTORIAL_URL} </a>
+                        </p>
+                    </div>
+                </div>
+
+                <form id="GofileEnhanced_Form" class="space-y-4">
+
+                ${Object.keys(ARIA2_RPC_CONFIG_KEY)
+                    .map((key) => this.getFormInputItemTemplate(ARIA2_RPC_CONFIG_KEY[key], key))
+                    .join('')}
+
+                    <button
+                        id="GofileEnhanced_RPC_Submit"
+                        type="submit"
+                        class="w-full py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-300 
+                            ease-in-out text-center text-white font-semibold flex items-center justify-center space-x-2"
+                    >
+                        <i class="fas fa-check"></i>
+                        <span> ${utils.getTranslation('ok')} </span>
+                    </button>
+                </form>
+            </div>
+            `
+        },
+        getButtonsByFormat(format) {
+            let elements = this.getRegularButtons(format)
+
+            switch (format.name) {
+                case 'IDM':
+                    break
+                case 'Aria2':
+                    elements = [...elements, ...this.getAria2Buttons()]
+                    break
+                default:
+                    break
+            }
+
+            return [this.getHrLine(), ...elements]
+        },
+    }
+
+    const operations = {
+        handleExport(selectMode, format) {
+            const allFiles = appdata.fileManager.mainContent.data.children
+            const selectedKeys = appdata.fileManager.contentsSelected
+
+            // all file keys or selected file keys
+            const fileKeys = Object.keys(selectMode ? selectedKeys : allFiles)
+
+            // to be downloaded keys
+            const tbdKeys = fileKeys.filter((key) => allFiles[key].type === FILE_TYPE)
+
+            if (tbdKeys.length === 0) {
+                return createNotification(
+                    selectMode ? utils.getTranslation('noFileSelected') : utils.getTranslation('noFiles'),
+                    selectMode ? utils.getTranslation('noFileSelectedDescription') : utils.getTranslation('noFilesDescription'),
+                    'warning'
+                )
+            }
+
+            const cookie = utils.getToken()
+
+            switch (format.name) {
+                case 'IDM':
+                    const IDMLinks = tbdKeys
+                        .map((key) => {
+                            const item = allFiles[key]
+                            return `<${CRLF}${item.link}${CRLF}cookie: ${cookie}${CRLF}>${CRLF}`
+                        })
+                        .join('')
+
+                    utils.downloadFile(IDMLinks, format)
+                    break
+                case 'Aria2':
+                    utils.sendToRPC(tbdKeys.map((key) => allFiles[key].link))
+                    break
+
+                default:
+                    break
+            }
+        },
+        // add buttons to sidebar
+        addContainerToSidebar() {
+            // create container
             const container = document.createElement('ul')
-            // add id
             container.id = GE_CONTAINER_ID
-            // add class to container
-            container.classList.add('pt-4', 'space-y-4', 'border-gray-700')
+            // 'border-t', 'border-gray-700', 'mt-4',
+            container.classList.add('pt-4', 'space-y-4')
+
             // append buttons to container
-            container.append(
-                utils.getHrLine(),
-                ...buttonsForAll,
-                utils.getHrLine(),
-                ...buttonsForSelected,
-                utils.getHrLine(),
-                rpcSettingsButton,
-                rpcResetButton
-            )
+            SUPPORTED_FORMATS.forEach((format) => {
+                utils.getButtonsByFormat(format).forEach((item) => {
+                    container.appendChild(item)
+                })
+            })
+
+            // append container to sidebar
             document.querySelector('#index_sidebar').appendChild(container)
         },
     }
 
     const main = {
         init() {
-            // init RPC config
             utils.initDefaultConfig()
 
-            // observe changes to the DOM
+            // Observe changes in the DOM
             const observer = new MutationObserver((_mutations, _obs) => {
+                // Check if the target node is available
                 const container = document.getElementById(GE_CONTAINER_ID)
 
+                // Check if the mainContent is available
                 if (appdata.fileManager?.mainContent?.data) {
-                    !container && operations.addButtonsToSidebar()
+                    // Add buttons to sidebar
+                    !container && operations.addContainerToSidebar()
                     // Stop observing
                     // obs.disconnect()
                 } else {
@@ -476,5 +507,6 @@
         },
     }
 
+    // Script Entry Point
     main.init()
 })()
