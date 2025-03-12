@@ -2,7 +2,7 @@
 // @name         GoFile 增强
 // @name:en      GoFile Enhanced
 // @namespace    https://github.com/ewigl/gofile-enhanced
-// @version      0.6.0
+// @version      0.6.1
 // @description  在 GoFile 文件下载页面添加亿个按钮，导出文件下载链接。配合 IDM、aria2 等下载器使用。
 // @description:en Export files' download link. Use along with IDM, aria2 and similar downloaders.
 // @author       Licht
@@ -45,6 +45,7 @@
     const ARIA2_RPC_TUTORIAL_URL = 'https://aria2.github.io/manual/en/html/aria2c.html#rpc-interface'
 
     const SUPPORTED_FORMATS = [
+        { name: 'Direct', value: 'direct' },
         { name: 'IDM', value: 'ef2' },
         { name: 'Aria2', value: 'rpc' },
     ]
@@ -190,6 +191,11 @@
             })
             // for each DEFAULT_CONFIG.rpcSettings
         },
+        goDirectLink(links) {
+            links.forEach((link) => {
+                window.open(link, link)
+            })
+        },
         downloadFile(links, format) {
             const blob = new Blob([links], { type: 'text/plain;charset=utf-8' })
             const url = URL.createObjectURL(blob)
@@ -200,10 +206,10 @@
             link.click()
             URL.revokeObjectURL(url)
         },
-        sendToRPC: async (fileLinks = []) => {
+        sendToRPC: async (fileLinks, cookie) => {
             const { address, secret, dir } = utils.getAria2RpcConfig()
 
-            const header = [`Cookie: ${utils.getToken()}`]
+            const header = [`Cookie: ${cookie}`]
 
             const rpcData = fileLinks.map((link) => {
                 return {
@@ -435,23 +441,25 @@
             }
 
             const cookie = utils.getToken()
+            const tbdLinks = tbdKeys.map((key) => allFiles[key].link)
 
             switch (format.name) {
+                case 'Direct':
+                    utils.goDirectLink(tbdLinks)
+                    break
                 case 'IDM':
-                    const IDMLinks = tbdKeys
-                        .map((key) => {
-                            const item = allFiles[key]
-                            return `<${CRLF}${item.link}${CRLF}cookie: ${cookie}${CRLF}>${CRLF}`
+                    const IDMLinks = tbdLinks
+                        .map((link) => {
+                            return `<${CRLF}${link}${CRLF}cookie: ${cookie}${CRLF}>${CRLF}`
                         })
                         .join('')
-
                     utils.downloadFile(IDMLinks, format)
                     break
                 case 'Aria2':
-                    utils.sendToRPC(tbdKeys.map((key) => allFiles[key].link))
+                    utils.sendToRPC(tbdLinks, cookie)
                     break
-
                 default:
+                    console.log('Unsupported format.')
                     break
             }
         },
