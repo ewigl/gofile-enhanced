@@ -2,7 +2,7 @@
 // @name         GoFile 增强
 // @name:en      GoFile Enhanced
 // @namespace    https://github.com/ewigl/gofile-enhanced
-// @version      0.6.1
+// @version      0.6.2
 // @description  在 GoFile 文件下载页面添加亿个按钮，导出文件下载链接。配合 IDM、aria2 等下载器使用。
 // @description:en Export files' download link. Use along with IDM, aria2 and similar downloaders.
 // @author       Licht
@@ -58,6 +58,8 @@
     const I18N = {
         'zh-CN': {
             // Button
+            downloadAll: '下载全部',
+            downloadSelected: '下载选中',
             exportAll: '导出全部',
             exportSelected: '导出选中',
             sendAll: '发送全部',
@@ -87,6 +89,8 @@
         },
         'en-US': {
             // Button
+            downloadAll: 'Download All',
+            downloadSelected: 'Download Selected',
             exportAll: 'Export All',
             exportSelected: 'Export Selected',
             sendAll: 'Send All',
@@ -293,9 +297,22 @@
             `
 
             // buttonText
-            const exportAllText = format.name === 'Aria2' ? utils.getTranslation('sendAll') : utils.getTranslation('exportAll')
-            const exportSelectedText =
-                format.name === 'Aria2' ? utils.getTranslation('sendSelected') : utils.getTranslation('exportSelected')
+            let exportAllText, exportSelectedText
+
+            switch (format.name) {
+                case 'IDM':
+                    exportAllText = utils.getTranslation('exportAll')
+                    exportSelectedText = utils.getTranslation('exportSelected')
+                    break
+                case 'Aria2':
+                    exportAllText = utils.getTranslation('sendAll')
+                    exportSelectedText = utils.getTranslation('sendSelected')
+                    break
+                default:
+                    exportAllText = utils.getTranslation('downloadAll')
+                    exportSelectedText = utils.getTranslation('downloadSelected')
+                    break
+            }
 
             // create export buttons
             const exportAllButton = document.createElement('li')
