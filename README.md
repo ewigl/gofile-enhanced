@@ -8,13 +8,17 @@
 >
 > Gofile batch file download script, Supports IDM and Aria2 RPC methods.
 
-![000](https://github.com/user-attachments/assets/ce3ac590-7cdd-4c7f-a5c8-cacce9969e4c)
+![000](https://github.com/user-attachments/assets/c8569200-106b-4450-8614-d06ac8b69265)
 
 ### 使用方法 / Usage
 
 #### Direct
 
 > 直链下载，浏览器接管下载任务，如果有使用 IDM 浏览器集成则会被 IDM 接管。
+>
+> 文件过多时不建议使用。
+>
+> Not recommended when there are too many files.
 
 -   打开 Gofile 网站设置，允许“弹出式窗口和重定向”权限。
 
