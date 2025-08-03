@@ -16,7 +16,7 @@ Batch download Gofile files. Supports direct links, [AB Download Manager](https:
 
 ### Direct
 
-> 直链下载，如果有使用 ABDM、FDM、IDM 等下载器的浏览器集成，则下载任务会被这些下载器自动接管。
+> 直链下载。如果有使用 ABDM、FDM、IDM 等下载器的浏览器集成，则下载任务会被这些下载器自动接管。
 >
 > 文件过多时不建议使用，会一次性打开大量浏览器窗口。
 
@@ -28,7 +28,7 @@ Batch download Gofile files. Supports direct links, [AB Download Manager](https:
 
 > 直接将下载任务发送到 ABDM。
 
-需要安装 ABDM。不依赖 ABDM 浏览器扩展。需要正确配置 ABDM 端口。默认端口为 15151。
+需要安装 ABDM。不依赖 ABDM 浏览器扩展（但推荐安装，以获得更好的 ABDM 体验）。需要正确配置 ABDM 端口。默认端口为 15151。
 
 ![abdm](https://github.com/user-attachments/assets/bc181f0e-b287-4cc3-b81f-a52150d28985)
 
@@ -52,7 +52,7 @@ English description here.
 
 ### Direct
 
-> Direct link download: the browser will handle the download task.
+> Direct link download. The browser will handle download tasks.
 > If ABDM, FDM or IDM browser integration is enabled, download tasks will be automatically taken over by these downloaders.
 >
 > Not recommended when there are too many files, a large number of browser tabs will be opened at once.
@@ -63,9 +63,9 @@ You need to open Gofile's Site Settings and grant 'Pop-ups and redirects' permis
 
 ### ABDM
 
-> Directly send the download task to the AB Download Manager (ABDM).
+> Directly send download tasks to AB Download Manager.
 
-ABDM is Required. Browser extension is not necessary.
+ABDM is REQUIRED. Browser extension is not necessary (but recommended for better experience with ABDM).
 Make sure to configure the ABDM port correctly. The default port is 15151.
 
 ![abdm](https://github.com/user-attachments/assets/bc181f0e-b287-4cc3-b81f-a52150d28985)
