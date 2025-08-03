@@ -72,12 +72,16 @@
             // ABDM
             abdmSettings: '配置 AB Download Manager',
             abdmPort: 'ABDM 端口',
+            abdmPortPlaceholder: '默认为 15151',
             abdmSendSuccess: '下载任务已发送至 ABDM',
             abdmSendFailed: '下载任务未成功发送至 ABDM',
             // RPC
             rpcAddress: 'RPC 地址',
             rpcSecret: 'RPC 密钥',
             rpcDir: 'RPC 下载目录',
+            rpcAddressPlaceholder: '格式: http://localhost:6800/jsonrpc',
+            rpcSecretPlaceholder: '若无密钥则留空',
+            rpcDirPlaceholder: '留空则使用 Aria2 配置',
             rpcSendSuccess: '下载任务已成功发送至 Aria2',
             rpcSendFailed: '下载任务未成功发送至 Aria2',
             // Common
@@ -115,12 +119,16 @@
             // ABDM
             abdmSettings: 'AB Download Manager Settings',
             abdmPort: 'ABDM Port',
+            abdmPortPlaceholder: 'Default is 15151',
             abdmSendSuccess: 'Download task sent to ABDM',
             abdmSendFailed: 'Download task failed to send to ABDM',
             // RPC
             rpcAddress: 'RPC Address',
             rpcSecret: 'RPC Secret',
             rpcDir: 'RPC Dir',
+            rpcAddressPlaceholder: 'E.g. http://localhost:6800/jsonrpc',
+            rpcSecretPlaceholder: 'Leave empty if not set',
+            rpcDirPlaceholder: "Leave empty to use Aria2's default",
             rpcSendSuccess: 'download task sent to Aria2',
             rpcSendFailed: 'download task failed to send to Aria2',
             // Common
@@ -269,6 +277,7 @@
                         },
                     },
                     name: item.name,
+                    // folder: item.folder,
                 }
             })
 
@@ -531,6 +540,18 @@
             return [this.getHrLine(), ...elements]
         },
         getFormInputItemTemplate(name, i18nKey) {
+            const aria2RPCPlaceholder = {
+                rpcAddress: utils.getTranslation('rpcAddressPlaceholder'),
+                rpcSecret: utils.getTranslation('rpcSecretPlaceholder'),
+                rpcDir: utils.getTranslation('rpcDirPlaceholder'),
+            }
+
+            const abdmPlaceholder = {
+                abdmPort: utils.getTranslation('abdmPortPlaceholder'),
+            }
+
+            const placeholder = aria2RPCPlaceholder[i18nKey] || abdmPlaceholder[i18nKey] || ''
+
             return `
             <div class="space-y-2">
                 <label for="${name}" class="block text-sm font-medium text-gray-300">
@@ -547,6 +568,7 @@
                         class="w-full pl-10 pr-3 py-2 bg-gray-700 rounded-lg border border-gray-600 focus:ring-2
                             focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition duration-200 text-white placeholder-gray-400"
                         value="${utils.getValue(name)}"
+                        placeholder="${placeholder}"
                     >
                 </div>
             </div>
