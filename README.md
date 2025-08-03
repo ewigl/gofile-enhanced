@@ -4,9 +4,9 @@
 
 [Greasy Fork](https://greasyfork.org/scripts/515250)
 
-Gofile 文件批量下载，支持批量直链下载、 [AB Download Manager](https://github.com/amir1376/ab-download-manager)、[Internet Download Manager](https://www.internetdownloadmanager.com/) 与所有基于 [Aria2](https://github.com/aria2/aria2) 封装的下载器。
+Gofile 文件批量下载，支持直链下载、 [AB Download Manager](https://github.com/amir1376/ab-download-manager)、[Internet Download Manager](https://www.internetdownloadmanager.com/) 与所有基于 [Aria2](https://github.com/aria2/aria2) 封装的下载器。
 
-Batch download Gofile files. Supports direct links, [AB Download Manager](https://github.com/amir1376/ab-download-manager), [Internet Download Manager](https://www.internetdownloadmanager.com/) and [Aria2](https://github.com/aria2/aria2) related download managers.
+Batch download Gofile files. Supports (bypassed) direct links, [AB Download Manager](https://github.com/amir1376/ab-download-manager), [Internet Download Manager](https://www.internetdownloadmanager.com/) and [Aria2](https://github.com/aria2/aria2) related download managers.
 
 ❗ Please scroll down for English desciption.
 
