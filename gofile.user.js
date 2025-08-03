@@ -2,9 +2,9 @@
 // @name         GoFile 增强
 // @name:en      GoFile Enhanced
 // @namespace    https://github.com/ewigl/gofile-enhanced
-// @version      0.6.2
-// @description  GoFile 文件批量下载。导出文件下载链接。可以配合 IDM、aria2 等下载器使用。
-// @description:en  Download files in batch. Support IDM, aria2 and similar downloaders.
+// @version      0.6.5
+// @description  GoFile 文件批量下载。批量导出下载链接。可以配合 AB Download Manager、IDM、Aria2 等下载器使用
+// @description:en  Download Gofiles in batch. Support AB Download Manager, IDM and Aria2 related downloaders.
 // @author       Licht
 // @license      MIT
 // @homepage     https://github.com/ewigl/gofile-enhanced
@@ -20,22 +20,19 @@
 ;(function () {
     'use strict'
 
-    // Api
+    // Gofile Api
     // appdata: literally, app data
 
-    // Funcs
+    // Gofile Funcs
     // function createNotification(title, message, type = 'success', duration = 3000)
     // function createPopup({ title, content, icon = null, backgroundOpacity = true, showCloseButton = true })
     // function createAlert(type, content)
 
-    // Formats
-    //
-    // IDM Exported Format (support CRLF(\r\n) only):
+    // IDM EF2 File Formats, support CRLF(\r\n) only
     // <
     // url
     // cookie: accountToken=ABCDEFG
     // >
-    //
 
     // constants
     const DEFAULT_LANGUAGE = 'en-US'
@@ -43,11 +40,13 @@
     const CRLF = '\r\n'
 
     const ARIA2_RPC_TUTORIAL_URL = 'https://aria2.github.io/manual/en/html/aria2c.html#rpc-interface'
+    const ABDM_HOEMPAGE_URL = 'https://github.com/amir1376/ab-download-manager'
 
     const SUPPORTED_FORMATS = [
         { name: 'Direct', value: 'direct' },
-        { name: 'IDM', value: 'ef2' },
+        { name: 'ABDM', value: 'abdm' },
         { name: 'Aria2', value: 'rpc' },
+        { name: 'IDM', value: 'ef2' },
     ]
 
     const GE_CONTAINER_ID = 'GofileEnhanced_Container'
@@ -64,28 +63,40 @@
             exportSelected: '导出选中',
             sendAll: '发送全部',
             sendSelected: '发送选中',
-            aria2RpcSettings: '配置 RPC',
-            aria2RpcReset: '重置 RPC',
+            aria2RpcSettings: '配置 Aria2 RPC',
             // Notification
             noFileSelected: '未选中任何文件',
-            noFileSelectedDescription: '请先选中文件',
+            noFileSelectedDescription: '请至少选中一个文件',
             noFiles: '没有文件可以下载',
-            noFilesDescription: '没有可以下载的文件 暂不支持文件夹下载',
+            noFilesDescription: '没有可以下载的文件, 暂不支持文件夹下载',
+            // ABDM
+            abdmSettings: '配置 AB Download Manager',
+            abdmPort: 'ABDM 端口',
+            abdmSendSuccess: '下载任务已发送至 ABDM',
+            abdmSendFailed: '下载任务未成功发送至 ABDM',
             // RPC
-            rpcSendSuccess: '已通过 RPC 发送至 Aria2 下载',
-            rpcSendFailed: '通过 RPC 发送至 Aria2 失败',
-            unknownError: '未知错误',
-            // RPC Settings
             rpcAddress: 'RPC 地址',
             rpcSecret: 'RPC 密钥',
             rpcDir: 'RPC 下载目录',
+            rpcSendSuccess: '下载任务已成功发送至 Aria2',
+            rpcSendFailed: '下载任务未成功发送至 Aria2',
             // Common
-            ok: '确定',
             cancel: '取消',
-            success: '成功',
+            checkPort: '请检查端口配置',
+            config: '配置',
+            connected: '已连接',
+            connection: '连接',
+            error: '错误',
             fail: '失败',
+            notConfigured: '未配置',
+            ok: '确定',
+            port: '端口',
             reset: '重置',
+            success: '成功',
+            test: '测试',
             to: '为',
+            unknownError: '未知错误',
+            unSupportedFormat: '不支持的格式',
         },
         'en-US': {
             // Button
@@ -95,66 +106,94 @@
             exportSelected: 'Export Selected',
             sendAll: 'Send All',
             sendSelected: 'Send Selected',
-            aria2RpcSettings: 'RPC Settings',
-            aria2RpcReset: 'RPC Reset',
+            aria2RpcSettings: 'Aria2 RPC Settings',
             // Notification
             noFileSelected: 'No file selected',
-            noFileSelectedDescription: 'Please select files first',
-            noFiles: 'No files can be downloaded',
-            noFilesDescription: 'No files can be downloaded, folder download is not supported, yet',
+            noFileSelectedDescription: 'Please select at least 1 file first',
+            noFiles: 'No file can be downloaded',
+            noFilesDescription: 'No file can be downloaded, folder download is not supported',
+            // ABDM
+            abdmSettings: 'AB Download Manager Settings',
+            abdmPort: 'ABDM Port',
+            abdmSendSuccess: 'Download task sent to ABDM',
+            abdmSendFailed: 'Download task failed to send to ABDM',
             // RPC
-            rpcSendSuccess: 'RPC send success',
-            rpcSendFailed: 'RPC send failed',
-            unknownError: 'Unknown error',
-            // RPC Settings
             rpcAddress: 'RPC address',
             rpcSecret: 'RPC secret',
             rpcDir: 'RPC dir',
+            rpcSendSuccess: 'Download task sent to Aria2',
+            rpcSendFailed: 'Download task failed to send to Aria2',
             // Common
-            ok: 'OK',
             cancel: 'Cancel',
-            success: 'Success',
-            fail: 'Fail',
+            checkPort: 'Please check port configuration',
+            config: 'Config',
+            connected: 'connected',
+            connection: 'connection',
+            error: 'error',
+            fail: 'failed',
+            notConfigured: 'not Configured',
+            ok: 'OK',
+            port: 'Port',
             reset: 'Reset',
+            success: 'Success',
+            test: 'Test',
             to: 'to',
+            unknownError: 'Unknown error',
+            unSupportedFormat: 'Unsupported format',
         },
     }
 
-    const ARIA2_RPC_CONFIG_KEY = {
+    const ARIA2_RPC_CONFIG = {
         rpcAddress: 'aria2_rpc_address',
         rpcSecret: 'aria2_rpc_secret',
         rpcDir: 'aria2_rpc_dir',
     }
 
-    const ARIA2_RPC_CONFIG_ICONS = {
-        rpcAddress: 'fa-link',
-        rpcSecret: 'fa-key',
-        rpcDir: 'fa-folder',
+    const ABDM_CONFIG = {
+        abdmPort: 'abdm_port',
     }
 
-    const DEFAULT_CONFIG = {
+    const DEFAULT_CONFIGS = {
         rpcSettings: [
             {
-                name: ARIA2_RPC_CONFIG_KEY.rpcAddress,
+                name: ARIA2_RPC_CONFIG.rpcAddress,
                 value: 'http://localhost:6800/jsonrpc',
             },
             {
-                name: ARIA2_RPC_CONFIG_KEY.rpcSecret,
+                name: ARIA2_RPC_CONFIG.rpcSecret,
                 value: '',
             },
             {
-                name: ARIA2_RPC_CONFIG_KEY.rpcDir,
+                name: ARIA2_RPC_CONFIG.rpcDir,
                 value: '',
+            },
+        ],
+        abdmSettings: [
+            {
+                name: ABDM_CONFIG.abdmPort,
+                value: '15151',
             },
         ],
     }
 
     const ICON_CLASS = {
         gofileEnhanced: 'fa-brands fa-google-plus',
-        exportAll: 'fas fa-circle-down',
-        exportSelected: 'far fa-circle-down',
-        aria2RpcSettings: 'fas fa-gear',
-        aria2RpcReset: 'fas fa-rotate-left',
+        downloadAll: 'fas fa-circle-down',
+        downloadSelected: 'far fa-circle-down',
+        exportAll: 'fas fa-file',
+        exportSelected: 'far fa-file',
+        sendAll: 'fas fa-paper-plane',
+        sendSelected: 'far fa-paper-plane',
+        abdmPort: 'fas fa-plug',
+        rpcAddress: 'fa-link',
+        rpcSecret: 'fa-key',
+        rpcDir: 'fa-folder',
+        folder: 'fas fa-folder',
+        key: 'fas fa-key',
+        link: 'fas fa-link',
+        reset: 'fas fa-rotate-left',
+        settings: 'fas fa-gear',
+        test: 'fas fa-circle-nodes',
     }
 
     const utils = {
@@ -164,7 +203,10 @@
         },
         // init default configs if not exists
         initDefaultConfig() {
-            DEFAULT_CONFIG.rpcSettings.forEach((item) => {
+            DEFAULT_CONFIGS.abdmSettings.forEach((item) => {
+                utils.getValue(item.name) === undefined && utils.setValue(item.name, item.value)
+            })
+            DEFAULT_CONFIGS.rpcSettings.forEach((item) => {
                 utils.getValue(item.name) === undefined && utils.setValue(item.name, item.value)
             })
         },
@@ -175,42 +217,100 @@
         },
         // get token from cookie
         getToken: () => document.cookie,
-        getAria2RpcConfig() {
-            return {
-                address: utils.getValue(ARIA2_RPC_CONFIG_KEY.rpcAddress),
-                secret: utils.getValue(ARIA2_RPC_CONFIG_KEY.rpcSecret),
-                dir:
-                    utils.getValue(ARIA2_RPC_CONFIG_KEY.rpcDir).trim() === ''
-                        ? undefined
-                        : utils.getValue(ARIA2_RPC_CONFIG_KEY.rpcDir),
-            }
-        },
-        resetRPCConfig() {
-            DEFAULT_CONFIG.rpcSettings.forEach((item) => {
-                utils.setValue(item.name, item.value)
-                createNotification(
-                    utils.getTranslation('success'),
-                    `${utils.getTranslation('reset')} ${item.name} ${utils.getTranslation('to')} "${item.value}"`
-                )
-            })
-            // for each DEFAULT_CONFIG.rpcSettings
-        },
+        // Direct download related
         goDirectLink(links) {
             links.forEach((link) => {
                 window.open(link, link)
             })
         },
-        downloadFile(links, format) {
-            const blob = new Blob([links], { type: 'text/plain;charset=utf-8' })
-            const url = URL.createObjectURL(blob)
-            const link = document.createElement('a')
-            link.href = url
-            // generate file name by timestamp
-            link.download = `${appdata.fileManager.mainContent.data.name} - ${new Date().getTime()}.${format.value}`
-            link.click()
-            URL.revokeObjectURL(url)
+        // ABDM related
+        testABDMConnection() {
+            const port = utils.getValue(ABDM_CONFIG.abdmPort)
+
+            const connectedString = `${utils.getTranslation('abdmPort')} ${utils.getTranslation('connected')}`
+            const connectionFailString = `${utils.getTranslation('abdmPort')} ${utils.getTranslation('connection')} ${utils.getTranslation('fail')}`
+            const notConfiguredString = `${utils.getTranslation('abdmPort')} ${utils.getTranslation('notConfigured')}`
+
+            if (port) {
+                GM_xmlhttpRequest({
+                    method: 'GET',
+                    url: `http://localhost:${port}/ping`,
+                    onload: (response) => {
+                        if (response.status === 200) {
+                            createNotification(utils.getTranslation('success'), connectedString)
+                        } else {
+                            createNotification(utils.getTranslation('error'), connectionFailString, 'error')
+                        }
+                    },
+                    onerror: (_error) => {
+                        createNotification(utils.getTranslation('error'), `${connectionFailString}, ${utils.getTranslation('checkPort')}`, 'error')
+                    },
+                    onabort: () => {
+                        createAlert('error', `${utils.getTranslation('unknownError')}, Aborted.`)
+                    },
+                })
+            } else {
+                createNotification('error', notConfiguredString, 'error')
+            }
         },
-        sendToRPC: async (fileLinks, cookie) => {
+        sendToABDM(tbdItems, cookie) {
+            const port = utils.getValue(ABDM_CONFIG.abdmPort)
+
+            if (!port) {
+                return createNotification('error', `${utils.getTranslation('abdmPort')} ${utils.getTranslation('notConfigured')}`, 'error')
+            }
+
+            const postDatas = tbdItems.map((item) => {
+                return {
+                    downloadSource: {
+                        link: item.link,
+                        headers: {
+                            cookie,
+                        },
+                    },
+                    name: item.name,
+                }
+            })
+
+            postDatas.forEach((data) => {
+                GM_xmlhttpRequest({
+                    method: 'POST',
+                    url: `http://localhost:${port}/start-headless-download`,
+                    data: JSON.stringify(data),
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    onload: (httpRes) => {
+                        if (httpRes.status === 200) {
+                            createNotification(utils.getTranslation('success'), `${data.name} ${utils.getTranslation('abdmSendSuccess')}`)
+                        } else {
+                            createNotification('error', `${utils.getTranslation('abdmSendFailed')} / ${httpRes.status} - ${httpRes.statusText}`, 'error')
+                        }
+                    },
+                    onerror: (_error) => {
+                        createNotification('error', `${utils.getTranslation('abdmSendFailed')}, ${utils.getTranslation('checkPort')}`, 'error')
+                    },
+                    onabort: () => {
+                        createAlert('error', `${utils.getTranslation('unknownError')}, Aborted.`)
+                    },
+                })
+            })
+        },
+        // Aria2 related
+        getAria2RpcConfig() {
+            return {
+                address: utils.getValue(ARIA2_RPC_CONFIG.rpcAddress),
+                secret: utils.getValue(ARIA2_RPC_CONFIG.rpcSecret),
+                dir: utils.getValue(ARIA2_RPC_CONFIG.rpcDir).trim() === '' ? undefined : utils.getValue(ARIA2_RPC_CONFIG.rpcDir),
+            }
+        },
+        resetRPCConfig() {
+            DEFAULT_CONFIGS.rpcSettings.forEach((item) => {
+                utils.setValue(item.name, item.value)
+                createNotification(utils.getTranslation('success'), `${utils.getTranslation('reset')} ${item.name} ${utils.getTranslation('to')} "${item.value}"`)
+            })
+        },
+        sendToRPC(fileLinks, cookie) {
             const { address, secret, dir } = utils.getAria2RpcConfig()
 
             const header = [`Cookie: ${cookie}`]
@@ -231,6 +331,7 @@
                 }
             })
 
+            // AJAX
             GM_xmlhttpRequest({
                 method: 'POST',
                 url: address,
@@ -242,37 +343,38 @@
 
                             responseArray.forEach((item) => {
                                 if (item.error) {
-                                    createNotification(
-                                        utils.getTranslation('fail'),
-                                        `${utils.getTranslation('rpcSendFailed')} / ${item.error.code} - ${item.error.message}`,
-                                        'error'
-                                    )
+                                    createNotification(utils.getTranslation('error'), `${utils.getTranslation('rpcSendFailed')} / ${item.error.code} - ${item.error.message}`, 'error')
                                 } else {
-                                    createNotification(
-                                        utils.getTranslation('success'),
-                                        `${utils.getTranslation('rpcSendSuccess')} / ${item.result}`
-                                    )
+                                    createNotification(utils.getTranslation('success'), `${utils.getTranslation('rpcSendSuccess')} / ${item.result}`)
                                 }
                             })
                         } catch (error) {
-                            createAlert('error', error.toString())
+                            createNotification(utils.getTranslation('error'), `${error.toString()}`, 'error')
                         }
                     } else {
-                        createAlert(
-                            'error',
-                            `${utils.getTranslation('rpcSendFailed')} / ${httpRes.status} - ${httpRes.statusText}`
-                        )
+                        createNotification(utils.getTranslation('error'), `${utils.getTranslation('rpcSendFailed')} / ${httpRes.status} - ${httpRes.statusText}`, 'error')
                     }
                 },
                 onerror: (error) => {
-                    // createNotification(utils.getTranslation('fail'), JSON.stringify(error), 'error')
-                    createAlert('error', JSON.stringify(error))
+                    createNotification(utils.getTranslation('error'), JSON.stringify(error), 'error')
                 },
                 onabort: () => {
-                    createAlert('error', utils.getTranslation('unknownError') + ' / (abort)')
+                    createAlert('error', `${utils.getTranslation('unknownError')}, Aborted.`)
                 },
             })
         },
+        // IDM related
+        downloadFile(content, format) {
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+            const url = URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.href = url
+            // generate file name by timestamp
+            link.download = `${appdata.fileManager.mainContent.data.name} - ${new Date().getTime()}.${format.value}`
+            link.click()
+            URL.revokeObjectURL(url)
+        },
+        // DOM related
         getHrLine() {
             const hrLine = document.createElement('li')
             hrLine.classList.add('border-b', 'border-gray-700')
@@ -297,20 +399,27 @@
             `
 
             // buttonText
-            let exportAllText, exportSelectedText
+            let exportAllText, exportSelectedText, exportAllIconClass, exportSelectedIconClass
 
             switch (format.name) {
-                case 'IDM':
-                    exportAllText = utils.getTranslation('exportAll')
-                    exportSelectedText = utils.getTranslation('exportSelected')
-                    break
+                case 'ABDM':
                 case 'Aria2':
                     exportAllText = utils.getTranslation('sendAll')
+                    exportAllIconClass = ICON_CLASS.sendAll
                     exportSelectedText = utils.getTranslation('sendSelected')
+                    exportSelectedIconClass = ICON_CLASS.sendSelected
+                    break
+                case 'IDM':
+                    exportAllText = utils.getTranslation('exportAll')
+                    exportAllIconClass = ICON_CLASS.exportAll
+                    exportSelectedText = utils.getTranslation('exportSelected')
+                    exportSelectedIconClass = ICON_CLASS.exportSelected
                     break
                 default:
                     exportAllText = utils.getTranslation('downloadAll')
+                    exportAllIconClass = ICON_CLASS.downloadAll
                     exportSelectedText = utils.getTranslation('downloadSelected')
+                    exportSelectedIconClass = ICON_CLASS.downloadSelected
                     break
             }
 
@@ -319,8 +428,8 @@
             const exportSelectedButton = document.createElement('li')
 
             // set innerHTML
-            exportAllButton.innerHTML = this.getButtonTemplate(ICON_CLASS.exportAll, exportAllText)
-            exportSelectedButton.innerHTML = this.getButtonTemplate(ICON_CLASS.exportSelected, exportSelectedText)
+            exportAllButton.innerHTML = this.getButtonTemplate(exportAllIconClass, exportAllText)
+            exportSelectedButton.innerHTML = this.getButtonTemplate(exportSelectedIconClass, exportSelectedText)
 
             // add click event for each button
             exportAllButton.addEventListener('click', operations.handleExport.bind(null, false, format))
@@ -328,25 +437,69 @@
 
             return [formatTitleElement, exportAllButton, exportSelectedButton]
         },
-        getAria2Buttons() {
-            // create rpc settings button
-            const rpcSettingsButton = document.createElement('div')
-            rpcSettingsButton.innerHTML = utils.getRPCButtonDom('settings')
-            // click rpc settings button to open modal
-            rpcSettingsButton.addEventListener('click', () => {
+        getCustomButtonDom(type, format) {
+            // type: settings, reset, test...
+            // format: direct, abdm, rpc, ef2...
+
+            const iconClass = ICON_CLASS[type] || ICON_CLASS.settings
+            const buttonText = format ? `${utils.getTranslation(type)} ${format.toUpperCase()}` : utils.getTranslation(type)
+
+            return this.getButtonTemplate(iconClass, buttonText)
+        },
+        // DOM ABDM related
+        getABDMButtons() {
+            // ABDM settings button
+            const abdmSettingsButton = document.createElement('div')
+            abdmSettingsButton.innerHTML = utils.getCustomButtonDom('config', 'abdm')
+
+            abdmSettingsButton.addEventListener('click', () => {
                 createPopup({
-                    title: utils.getTranslation('aria2RpcSettings'),
-                    content: utils.getRPCSettingsDom(),
+                    title: utils.getTranslation('abdmSettings'),
+                    content: utils.getConfigPanel('ABDM', ABDM_CONFIG, ABDM_HOEMPAGE_URL),
                     icon: 'fas fa-gears',
                 })
 
-                const form = document.forms['GofileEnhanced_Form']
+                const form = document.forms['GofileEnhanced_Form_ABDM']
 
                 if (form) {
                     form.addEventListener('submit', (event) => {
                         event.preventDefault()
-                        Object.keys(ARIA2_RPC_CONFIG_KEY).forEach((key) => {
-                            utils.setValue(ARIA2_RPC_CONFIG_KEY[key], form.elements[ARIA2_RPC_CONFIG_KEY[key]].value)
+                        Object.keys(ABDM_CONFIG).forEach((key) => {
+                            utils.setValue(ABDM_CONFIG[key], form.elements[ABDM_CONFIG[key]].value)
+                        })
+                        closePopup()
+                    })
+                }
+            })
+
+            const testABDMButton = document.createElement('div')
+            testABDMButton.innerHTML = utils.getCustomButtonDom('test', 'abdm')
+            testABDMButton.addEventListener('click', () => {
+                utils.testABDMConnection()
+            })
+
+            return [abdmSettingsButton, testABDMButton]
+        },
+        // DOM Aria2 related
+        getAria2Buttons() {
+            // create rpc settings button
+            const rpcSettingsButton = document.createElement('div')
+            rpcSettingsButton.innerHTML = utils.getCustomButtonDom('config', 'rpc')
+            // click rpc settings button to open modal
+            rpcSettingsButton.addEventListener('click', () => {
+                createPopup({
+                    title: utils.getTranslation('aria2RpcSettings'),
+                    content: utils.getConfigPanel('RPC', ARIA2_RPC_CONFIG, ARIA2_RPC_TUTORIAL_URL),
+                    icon: 'fas fa-gears',
+                })
+
+                const form = document.forms['GofileEnhanced_Form_RPC']
+
+                if (form) {
+                    form.addEventListener('submit', (event) => {
+                        event.preventDefault()
+                        Object.keys(ARIA2_RPC_CONFIG).forEach((key) => {
+                            utils.setValue(ARIA2_RPC_CONFIG[key], form.elements[ARIA2_RPC_CONFIG[key]].value)
                         })
                         closePopup()
                     })
@@ -354,19 +507,28 @@
             })
 
             const rpcResetButton = document.createElement('div')
-            rpcResetButton.innerHTML = utils.getRPCButtonDom('reset')
-            // click aria2 rpc reset button to reset rpc config
+            rpcResetButton.innerHTML = utils.getCustomButtonDom('reset', 'rpc')
             rpcResetButton.addEventListener('click', () => {
                 utils.resetRPCConfig()
             })
 
             return [rpcSettingsButton, rpcResetButton]
         },
-        getRPCButtonDom(type) {
-            const buttonText = utils.getTranslation(type === 'settings' ? 'aria2RpcSettings' : 'aria2RpcReset')
-            const iconClass = type === 'settings' ? ICON_CLASS.aria2RpcSettings : ICON_CLASS.aria2RpcReset
+        getButtonsByFormat(format) {
+            let elements = this.getRegularButtons(format)
 
-            return this.getButtonTemplate(iconClass, buttonText)
+            switch (format.name) {
+                case 'ABDM':
+                    elements = [...elements, ...this.getABDMButtons()]
+                    break
+                case 'Aria2':
+                    elements = [...elements, ...this.getAria2Buttons()]
+                    break
+                default:
+                    break
+            }
+
+            return [this.getHrLine(), ...elements]
         },
         getFormInputItemTemplate(name, i18nKey) {
             return `
@@ -376,7 +538,7 @@
                 </label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fas ${ARIA2_RPC_CONFIG_ICONS[i18nKey]} text-gray-400"></i>
+                        <i class="fas ${ICON_CLASS[i18nKey]} text-gray-400"></i>
                     </div>
                     <input 
                         type="text" 
@@ -390,26 +552,26 @@
             </div>
             `
         },
-        getRPCSettingsDom() {
+        getConfigPanel(ID, CONFIG, TITLE) {
             return `
             <div class="space-y-4">
                 <div class="bg-blue-900 bg-opacity-20 border border-blue-800 rounded-lg p-4">
                     <div class="flex items-center space-x-3">
                         <i class="fas fa-info-circle text-blue-400 text-xl"></i>
                         <p class="text-gray-300 text-sm">
-                            <a href="${ARIA2_RPC_TUTORIAL_URL}" target="_blank" rel="noopener noreferrer"> ${ARIA2_RPC_TUTORIAL_URL} </a>
+                            <a href="${TITLE}" target="_blank" rel="noopener noreferrer"> ${TITLE} </a>
                         </p>
                     </div>
                 </div>
 
-                <form id="GofileEnhanced_Form" class="space-y-4">
+                <form id="GofileEnhanced_Form_${ID}" class="space-y-4">
 
-                ${Object.keys(ARIA2_RPC_CONFIG_KEY)
-                    .map((key) => this.getFormInputItemTemplate(ARIA2_RPC_CONFIG_KEY[key], key))
+                ${Object.keys(CONFIG)
+                    .map((key) => this.getFormInputItemTemplate(CONFIG[key], key))
                     .join('')}
 
                     <button
-                        id="GofileEnhanced_RPC_Submit"
+                        id="GofileEnhanced_${ID}_Submit"
                         type="submit"
                         class="w-full py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-300 
                             ease-in-out text-center text-white font-semibold flex items-center justify-center space-x-2"
@@ -420,21 +582,6 @@
                 </form>
             </div>
             `
-        },
-        getButtonsByFormat(format) {
-            let elements = this.getRegularButtons(format)
-
-            switch (format.name) {
-                case 'IDM':
-                    break
-                case 'Aria2':
-                    elements = [...elements, ...this.getAria2Buttons()]
-                    break
-                default:
-                    break
-            }
-
-            return [this.getHrLine(), ...elements]
         },
     }
 
@@ -458,11 +605,18 @@
             }
 
             const cookie = utils.getToken()
+            const tbdItems = tbdKeys.map((key) => allFiles[key])
             const tbdLinks = tbdKeys.map((key) => allFiles[key].link)
 
             switch (format.name) {
                 case 'Direct':
                     utils.goDirectLink(tbdLinks)
+                    break
+                case 'ABDM':
+                    utils.sendToABDM(tbdItems, cookie)
+                    break
+                case 'Aria2':
+                    utils.sendToRPC(tbdLinks, cookie)
                     break
                 case 'IDM':
                     const IDMLinks = tbdLinks
@@ -472,11 +626,8 @@
                         .join('')
                     utils.downloadFile(IDMLinks, format)
                     break
-                case 'Aria2':
-                    utils.sendToRPC(tbdLinks, cookie)
-                    break
                 default:
-                    console.log('Unsupported format.')
+                    createNotification(utils.getTranslation('error'), `${format.name} ${utils.getTranslation('unSupportedFormat')}`, 'error')
                     break
             }
         },
