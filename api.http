@@ -1,0 +1,40 @@
+# AB Download Manager
+
+# ping
+# Expect a pong.
+POST http://localhost:15151/ping
+
+# send download task
+POST http://localhost:15151/start-headless-download
+content-type: application/json
+
+{
+  "downloadSource": {
+    "link": "url",
+    "headers": {
+      "cookie": "cookie"
+    }
+  },
+  "name": "file name"
+}
+
+
+# Aria2 RPC
+POST http://localhost:6800/jsonrpc
+content-type: application/json
+
+{
+  "id": "id",
+  "jsonrpc": "2.0",
+  "method": "aria2.addUri",
+  "params": [
+    "token:your_secret",
+    ["url"],
+    {
+      "header": [
+        "Cookie: cookie"
+      ],
+      "dir": "download directory",
+    }
+  ]
+}
