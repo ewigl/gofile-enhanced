@@ -1,7 +1,25 @@
+# ################################
+# Gofile
+
+# Properties
+# appdata: literally, app data
+
+# Funcs
+# function createNotification(title, message, type = 'success', duration = 3000)
+# function createPopup({ title, content, icon = null, backgroundOpacity = true, showCloseButton = true })
+# function createAlert(type, content)
+
+# IDM EF2 File Formats, support CRLF(\r\n) only
+# <
+# url
+# cookie: accountToken=ABCDEFG
+# >
+
+
+# ################################
 # AB Download Manager
 
-# ping
-# Expect a pong.
+# ping, expect a pong.
 POST http://localhost:15151/ping
 
 # send download task
@@ -19,7 +37,10 @@ content-type: application/json
 }
 
 
+# ################################
 # Aria2 RPC
+
+# send download task
 POST http://localhost:6800/jsonrpc
 content-type: application/json
 
@@ -27,7 +48,7 @@ content-type: application/json
   "id": "id",
   "jsonrpc": "2.0",
   "method": "aria2.addUri",
-  "params": [
+  "params": '[
     "token:your_secret",
     ["url"],
     {
@@ -36,5 +57,5 @@ content-type: application/json
       ],
       "dir": "download directory",
     }
-  ]
+  ]'
 }
