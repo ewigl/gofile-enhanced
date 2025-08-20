@@ -121,9 +121,14 @@
         circle_down_s: 'fas fa-circle-down',
         circle_down_r: 'far fa-circle-down',
         circle_nodes_s: 'fas fa-circle-nodes',
+        copy_s: 'fas fa-copy',
+        copy_r: 'far fa-copy',
         file_s: 'fas fa-file',
         file_r: 'far fa-file',
+        file_ziper_s: 'fas fa-file-zipper',
+        file_ziper_r: 'far fa-file-zipper',
         folder_s: 'fas fa-folder',
+        folder_r: 'far fa-folder',
         gear_s: 'fas fa-gear',
         google_plus: 'fa-brands fa-google-plus',
         key_s: 'fas fa-key',
@@ -451,13 +456,19 @@
             const exportAllButton = utils.createButton({
                 text: exportAllText,
                 icon: exportAllIcon,
-                onClick: operations.handleExport.bind(null, false, format),
+                onClick: operations.handleExport.bind(null, {
+                    selectMode: false,
+                    format,
+                }),
             })
 
             const exportSelectedButton = utils.createButton({
                 text: exportSelectedText,
                 icon: exportSelectedIcon,
-                onClick: operations.handleExport.bind(null, true, format),
+                onClick: operations.handleExport.bind(null, {
+                    selectMode: true,
+                    format,
+                }),
             })
 
             return [formatTitleElement, exportAllButton, exportSelectedButton]
@@ -600,7 +611,9 @@
     }
 
     const operations = {
-        handleExport(selectMode, format) {
+        handleExport(options) {
+            const { selectMode, format } = options
+
             const allFiles = appdata.fileManager.mainContent.data.children
             const selectedKeys = appdata.fileManager.contentsSelected
 
@@ -619,8 +632,9 @@
             }
 
             const cookie = utils.getToken()
+
             const tbdItems = tbdKeys.map((key) => allFiles[key])
-            const tbdLinks = tbdKeys.map((key) => allFiles[key].link)
+            const tbdLinks = tbdItems.map((item) => item.link)
 
             switch (format) {
                 case 'Direct':
