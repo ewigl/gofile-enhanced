@@ -32,17 +32,21 @@
         'zh-CN': {
             abdm_connected: 'ABDM 连接成功',
             abdm_connection_fail: 'ABDM 连接失败',
+            abdm_download_folder: 'ABDM 下载目录',
+            abdm_download_folder_placeholder: '若留空则使用 ABDM 默认设置',
             abdm_port: 'ABDM 端口',
             abdm_port_not_configured: 'ABDM 端口未配置',
             abdm_port_placeholder: '默认为 15151',
+            abdm_settings: ' AB Download Manager 设置',
             aria2_connected: 'Aria2 连接成功',
             aria2_connection_fail: 'Aria2 连接失败',
             aria2_rpc_address: 'Aria2 RPC 地址',
             aria2_rpc_address_placeholder: '默认为 http://localhost:6800/jsonrpc',
             aria2_rpc_secret: 'Aria2 RPC 密钥',
             aria2_rpc_secret_placeholder: '若未设置留空即可',
-            aria2_rpc_dir: 'Aria2 RPC 目录',
+            aria2_rpc_dir: 'Aria2 下载目录',
             aria2_rpc_dir_placeholder: '若留空则使用 Aria2 默认设置',
+            aria2_settings: 'Aria2 设置',
             cancel: '取消',
             config: '配置',
             confirm: '确定',
@@ -55,10 +59,10 @@
             export_selected: '导出选中',
             failed_to_send_to_abdm: '未成功发送至 ABDM',
             failed_to_send_to_aria2: '未成功发送至 Aria2',
-            id: 'ID',
             no_file_selected: '未选择文件',
             no_file_selected_description: '请至少选择一个文件',
             recursion_download: '递归下载',
+            recursion_send: '递归发送',
             reset_aria2: '重置 Aria2',
             send_all: '发送全部',
             send_selected: '发送选中',
@@ -69,6 +73,7 @@
             test_abdm: '测试 ABDM',
             test_aria2: '测试 Aria2',
             unknown_error: '未知错误',
+            unsupported_format: '不支持的格式',
             request_aborted: '请求中断',
             request_timed_out: '请求超时',
         },
@@ -78,6 +83,7 @@
             abdm_port: 'ABDM Port',
             abdm_port_not_configured: 'ABDM port not configured',
             abdm_port_placeholder: 'Default is 15151',
+            abdm_settings: 'AB Download Manager Settings',
             aria2_connected: 'Aria2 connected successfully',
             aria2_connection_fail: 'Aria2 connection failed',
             aria2_rpc_address: 'Aria2 RPC Address',
@@ -86,6 +92,7 @@
             aria2_rpc_secret_placeholder: 'Leave empty if not set',
             aria2_rpc_dir: 'Aria2 RPC Directory',
             aria2_rpc_dir_placeholder: 'Leave empty to use Aria2 default settings',
+            aria2_settings: 'Aria2 Settings',
             cancel: 'Cancel',
             config: 'Config',
             confirm: 'Confirm',
@@ -98,7 +105,6 @@
             export_selected: 'Export Selected',
             failed_to_send_to_abdm: 'Failed to send to ABDM',
             failed_to_send_to_aria2: 'Failed to send to Aria2',
-            id: 'ID',
             no_file_selected: 'No File Selected',
             no_file_selected_description: 'Please select at least one file',
             reset_aria2: 'Reset Aria2',
@@ -112,6 +118,7 @@
             test_abdm: 'Test ABDM',
             test_aria2: 'Test Aria2',
             unknown_error: 'Unknown Error',
+            unsupported_format: 'Unsupported Format',
             request_aborted: 'Request Aborted',
             request_timed_out: 'Request Timed Out',
         },
@@ -152,6 +159,13 @@
                     i18nKey: 'abdm_port',
                     icon: ICONS.plug_s,
                     placeholderI18nKey: 'abdm_port_placeholder',
+                },
+                abdmDownloadFolder: {
+                    key: 'abdm_download_folder',
+                    defaultValue: '',
+                    i18nKey: 'abdm_download_folder',
+                    icon: ICONS.folder_s,
+                    placeholderI18nKey: 'abdm_download_folder_placeholder',
                 },
             },
         },
@@ -256,13 +270,15 @@
             return I18N[lang][key] || key
         },
         getToken: () => document.cookie,
-        goDirectLink(links) {
+        goDirectLinks(links) {
             links.forEach((link) => {
                 window.open(link, link)
             })
         },
-        sendToABDM(tbdItems, cookie) {
-            const abdmPort = utils.getSettings('ABDM', 'abdmPort')
+        recursionItems() {},
+        sendToABDM(tbdItems) {
+            const { abdmPort, abdmDownloadFolder } = utils.getAllSettings('ABDM')
+            const cookie = utils.getToken()
 
             if (!abdmPort) {
                 return createNotification('error', utils.getTranslation('abdm_port_not_configured'), 'error')
@@ -277,7 +293,7 @@
                         },
                     },
                     name: item.name,
-                    // folder: item.folder,
+                    folder: item.downloadFolder || abdmDownloadFolder,
                 }
             })
 
@@ -341,22 +357,24 @@
                 createNotification(utils.getTranslation('error'), utils.getTranslation('aria2_connection_fail'), 'error')
             }
         },
-        async sendToAria2(fileLinks, cookie) {
+        async sendToAria2(tbdItems) {
             const { rpcAddress, rpcSecret, rpcDir } = utils.getAllSettings('Aria2')
+
+            const cookie = utils.getToken()
 
             const header = [`Cookie: ${cookie}`]
 
-            const rpcData = fileLinks.map((link) => {
+            const rpcData = tbdItems.map((item) => {
                 return {
                     id: new Date().getTime(),
                     jsonrpc: '2.0',
                     method: 'aria2.addUri',
                     params: [
                         `token:${rpcSecret}`,
-                        [link],
+                        [item.link],
                         {
                             header,
-                            dir: rpcDir,
+                            dir: item.downloadFolder || rpcDir,
                         },
                     ],
                 }
@@ -375,7 +393,7 @@
                         if (item.error) {
                             createNotification(utils.getTranslation('error'), `${utils.getTranslation('failed_to_send_to_aria2')} / ${item.error.code} - ${item.error.message}`, 'error')
                         } else {
-                            createNotification(utils.getTranslation('success'), `${utils.getTranslation('successfully_sent_to_aria2')} / ${utils.getTranslation('id')}: ${item.result}`)
+                            createNotification(utils.getTranslation('success'), `${utils.getTranslation('successfully_sent_to_aria2')} / ID: ${item.result}`)
                         }
                     })
                 } else {
@@ -384,6 +402,16 @@
             } catch (e) {
                 createNotification(utils.getTranslation('error'), utils.getTranslation('failed_to_send_to_aria2'), 'error')
             }
+        },
+        exportToIDM(tbdItems) {
+            const cookie = utils.getToken()
+            const IDMFormatContent = tbdItems
+                .map((item) => {
+                    return `<${CRLF}${item.link}${CRLF}cookie: ${cookie}${CRLF}>${CRLF}`
+                })
+                .join('')
+
+            utils.saveAsFile(IDMFormatContent, 'ef2')
         },
         saveAsFile(content, fileExtension) {
             const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
@@ -476,7 +504,7 @@
         getSpecialButtons(downloader) {
             const additionalButtons = []
 
-            const settingsPanleTitle = utils.getTranslation(`${downloader.toLowerCase()}Settings`)
+            const settingsPanleTitle = utils.getTranslation(`${downloader.toLowerCase()}_settings`)
             const settingsButton = utils.createButton({
                 icon: ICONS.gear_s,
                 text: `${utils.getTranslation('config')} ${downloader}`,
@@ -503,12 +531,30 @@
                 },
             })
 
+            const abdmRecursionDownloadButton = utils.createButton({
+                text: utils.getTranslation('recursion_download'),
+                icon: ICONS.copy_s,
+                onClick: operations.handleExport.bind(null, {
+                    enableRecursion: true,
+                    format: 'ABDM',
+                }),
+            })
+
             const testABDMButton = utils.createButton({
                 icon: ICONS.circle_nodes_s,
                 text: utils.getTranslation('test_abdm'),
                 onClick: () => {
                     utils.testABDMConnection()
                 },
+            })
+
+            const aria2RecursionDownloadButton = utils.createButton({
+                text: utils.getTranslation('recursion_download'),
+                icon: ICONS.copy_s,
+                onClick: operations.handleExport.bind(null, {
+                    enableRecursion: true,
+                    format: 'Aria2',
+                }),
             })
 
             const testAria2Button = utils.createButton({
@@ -529,10 +575,12 @@
 
             switch (downloader) {
                 case 'ABDM':
+                    additionalButtons.push(abdmRecursionDownloadButton)
                     additionalButtons.push(settingsButton)
                     additionalButtons.push(testABDMButton)
                     break
                 case 'Aria2':
+                    additionalButtons.push(aria2RecursionDownloadButton)
                     additionalButtons.push(settingsButton)
                     additionalButtons.push(testAria2Button)
                     additionalButtons.push(rpcResetButton)
@@ -612,14 +660,13 @@
 
     const operations = {
         handleExport(options) {
-            const { selectMode, format } = options
+            const { selectMode, format, enableRecursion } = options
 
             const allFiles = appdata.fileManager.mainContent.data.children
-            const selectedKeys = appdata.fileManager.contentsSelected
 
+            const selectedKeys = appdata.fileManager.contentsSelected
             // all file keys or selected file keys
             const fileKeys = Object.keys(selectMode ? selectedKeys : allFiles)
-
             // to be downloaded keys
             const tbdKeys = fileKeys.filter((key) => allFiles[key].type === 'file')
 
@@ -631,31 +678,25 @@
                 )
             }
 
-            const cookie = utils.getToken()
+            const tbdItems = enableRecursion ? [] : tbdKeys.map((key) => allFiles[key])
 
-            const tbdItems = tbdKeys.map((key) => allFiles[key])
-            const tbdLinks = tbdItems.map((item) => item.link)
+            console.log('tbdItems', tbdItems)
 
             switch (format) {
                 case 'Direct':
-                    utils.goDirectLink(tbdLinks)
+                    utils.goDirectLinks(tbdItems.map((item) => item.link))
                     break
                 case 'ABDM':
-                    utils.sendToABDM(tbdItems, cookie)
+                    utils.sendToABDM(tbdItems)
                     break
                 case 'Aria2':
-                    utils.sendToAria2(tbdLinks, cookie)
+                    utils.sendToAria2(tbdItems)
                     break
                 case 'IDM':
-                    const IDMLinks = tbdLinks
-                        .map((link) => {
-                            return `<${CRLF}${link}${CRLF}cookie: ${cookie}${CRLF}>${CRLF}`
-                        })
-                        .join('')
-                    utils.saveAsFile(IDMLinks, 'ef2')
+                    utils.exportToIDM(tbdItems)
                     break
                 default:
-                    createNotification(utils.getTranslation('error'), `${format} ${utils.getTranslation('unSupportedFormat')}`, 'error')
+                    createNotification(utils.getTranslation('error'), `${utils.getTranslation('unsupported_format')}`, 'error')
                     break
             }
         },
