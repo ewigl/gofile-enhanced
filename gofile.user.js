@@ -68,7 +68,6 @@
             no_file_selected_description: '请至少选择一个文件',
             please_make_sure_you_have_configured_download_folder: '请确保您已正确配置下载目录',
             recursion_download: '递归下载',
-            recursion_send: '递归发送',
             reset_aria2: '重置 Aria2',
             send_all: '发送全部',
             send_selected: '发送选中',
