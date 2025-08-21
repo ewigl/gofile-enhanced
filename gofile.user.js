@@ -2,7 +2,7 @@
 // @name         GoFile 增强
 // @name:en      GoFile Enhanced
 // @namespace    https://github.com/ewigl/gofile-enhanced
-// @version      0.7.6
+// @version      0.7.7
 // @description  GoFile 文件批量下载。支持递归下载文件夹内容、直链下载。可以配合 AB Download Manager、Aria2、IDM 等下载器使用。
 // @description:en  Directly batch-download GoFiles. Supports recursive folder download, Supports direct links. Built-in support for download managers like AB Download Manager, Aria2, and IDM.
 // @author       Licht
@@ -58,6 +58,7 @@
             error: '错误',
             export_all: '导出全部',
             export_selected: '导出选中',
+            failed_to_fetch_folder_content: '获取文件夹内容失败',
             failed_to_send_to_abdm: '未成功发送至 ABDM',
             failed_to_send_to_aria2: '未成功发送至 Aria2',
             fetching_file_list: '正在获取文件列表',
@@ -112,6 +113,7 @@
             error: 'Error',
             export_all: 'Export All',
             export_selected: 'Export Selected',
+            failed_to_fetch_folder_content: 'Failed to fetch folder content',
             failed_to_send_to_abdm: 'Failed to send to ABDM',
             failed_to_send_to_aria2: 'Failed to send to Aria2',
             fetching_file_list: 'Fetching file list',
@@ -335,13 +337,17 @@
                                     if (data.status === 'ok') {
                                         await collectItems(currentContentData, currentPath)
                                     } else {
-                                        console.error(`Failed to fetch folder contents for ${item.name}:`, data.message)
+                                        createNotification(
+                                            utils.getTranslation('error'),
+                                            `${utils.getTranslation('failed_to_fetch_folder_content')} ${childItem.name}: ${data.message}`,
+                                            'error'
+                                        )
                                     }
                                 } else {
-                                    console.error(`Failed to fetch folder contents for ${item.name}:`, res.status, res.statusText)
+                                    createNotification(utils.getTranslation('error'), `${utils.getTranslation('failed_to_fetch_folder_content')} / ${res.status} - ${res.statusText}`, 'error')
                                 }
                             } catch (error) {
-                                console.error(`Failed to fetch folder contents for ${item.name}:`, error)
+                                createNotification(utils.getTranslation('error'), `${utils.getTranslation('failed_to_fetch_folder_content')} ${childItem.name}`, 'error')
                             }
                         }
                     }
@@ -403,7 +409,7 @@
             const cookie = utils.getToken()
 
             if (!abdmPort) {
-                return createNotification('error', utils.getTranslation('abdm_port_not_configured'), 'error')
+                return createNotification(utils.getTranslation('error'), utils.getTranslation('abdm_port_not_configured'), 'error')
             }
 
             const postDatas = tbdItems.map((item) => {
@@ -450,7 +456,7 @@
                     createNotification(utils.getTranslation('error'), utils.getTranslation('abdm_connection_fail'), 'error')
                 }
             } else {
-                createNotification('error', utils.getTranslation('abdm_not_configured'), 'error')
+                createNotification(utils.getTranslation('error'), utils.getTranslation('abdm_not_configured'), 'error')
             }
         },
         async testAria2Connection() {
