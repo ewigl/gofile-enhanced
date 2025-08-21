@@ -2,7 +2,7 @@
 // @name         GoFile 增强
 // @name:en      GoFile Enhanced
 // @namespace    https://github.com/ewigl/gofile-enhanced
-// @version      0.7.0
+// @version      0.7.5
 // @description  GoFile 文件批量下载。可以配合 AB Download Manager、Aria2、Gopeed、IDM 等下载器使用。
 // @description:en  Directly batch-download GoFiles, with built-in support for download managers like AB Download Manager, Aria2, Gopeed, and IDM.
 // @author       Licht
@@ -38,6 +38,7 @@
             abdm_port_not_configured: 'ABDM 端口未配置',
             abdm_port_placeholder: '默认为 15151',
             abdm_settings: ' AB Download Manager 设置',
+            are_you_sure_to_download__these_files: '确定要下载下列文件吗？',
             aria2_connected: 'Aria2 连接成功',
             aria2_connection_fail: 'Aria2 连接失败',
             aria2_rpc_address: 'Aria2 RPC 地址',
@@ -59,14 +60,20 @@
             export_selected: '导出选中',
             failed_to_send_to_abdm: '未成功发送至 ABDM',
             failed_to_send_to_aria2: '未成功发送至 Aria2',
+            fetching_file_list: '正在获取文件列表',
+            loading: '加载中...',
+            loading_file_list: '正在加载文件列表',
+            loading_please_wait: '正在加载，请稍候',
             no_file_selected: '未选择文件',
             no_file_selected_description: '请至少选择一个文件',
+            please_make_sure_you_have_configured_download_folder: '请确保您已正确配置下载目录',
             recursion_download: '递归下载',
             recursion_send: '递归发送',
             reset_aria2: '重置 Aria2',
             send_all: '发送全部',
             send_selected: '发送选中',
             success: '成功',
+            successfully_fetched_file_list: '成功获取文件列表',
             successfully_reset: '已重置',
             successfully_sent_to_abdm: '已成功发送至 ABDM',
             successfully_sent_to_aria2: '已成功发送至 Aria2',
@@ -80,10 +87,13 @@
         'en-US': {
             abdm_connected: 'ABDM connected successfully',
             abdm_connection_fail: 'ABDM connection failed',
+            abdm_download_folder: 'ABDM Download Folder',
+            abdm_download_folder_placeholder: 'Leave empty to use ABDM default settings',
             abdm_port: 'ABDM Port',
             abdm_port_not_configured: 'ABDM port not configured',
             abdm_port_placeholder: 'Default is 15151',
             abdm_settings: 'AB Download Manager Settings',
+            are_you_sure_to_download__these_files: 'Are you sure you want to download the following files?',
             aria2_connected: 'Aria2 connected successfully',
             aria2_connection_fail: 'Aria2 connection failed',
             aria2_rpc_address: 'Aria2 RPC Address',
@@ -105,13 +115,19 @@
             export_selected: 'Export Selected',
             failed_to_send_to_abdm: 'Failed to send to ABDM',
             failed_to_send_to_aria2: 'Failed to send to Aria2',
+            fetching_file_list: 'Fetching file list',
+            loading: 'Loading...',
+            loading_file_list: 'Loading file list',
+            loading_please_wait: 'Loading, please wait',
             no_file_selected: 'No File Selected',
             no_file_selected_description: 'Please select at least one file',
+            please_make_sure_you_have_configured_download_folder: 'Please make sure you have configured the download folder',
             reset_aria2: 'Reset Aria2',
             recursion_download: 'Recursion Download',
             send_all: 'Send All',
             send_selected: 'Send Selected',
             success: 'Success',
+            successfully_fetched_file_list: 'Successfully fetched file list',
             successfully_reset: 'successfully reset',
             successfully_sent_to_abdm: 'successfully sent to ABDM',
             successfully_sent_to_aria2: 'successfully sent to Aria2',
@@ -275,7 +291,116 @@
                 window.open(link, link)
             })
         },
-        recursionItems() {},
+        async collectAllItems() {
+            createAlert('loading', utils.getTranslation('fetching_file_list'))
+
+            const mainContentData = appdata.fileManager.mainContent.data
+            const tbdItems = []
+
+            const cookie = utils.getToken()
+            const authorization =
+                cookie
+                    .split(';')
+                    .find((row) => row.startsWith('accountToken='))
+                    ?.split('=')[1] || ''
+            const wt = appdata.wt
+
+            let toDownloadFiles = []
+
+            const collectItems = async (contentData, parentPath = '') => {
+                if (contentData.childrenCount > 0) {
+                    for (const key of Object.keys(contentData.children)) {
+                        const childItem = contentData.children[key]
+
+                        console.log()
+
+                        const currentPath = `${parentPath}/${contentData.name}`
+
+                        if (childItem.type === 'file') {
+                            tbdItems.push({ ...childItem, downloadFolder: currentPath })
+                            toDownloadFiles.push(`${currentPath}/${childItem.name}`)
+                        } else if (childItem.type === 'folder') {
+                            if (childItem.childrenCount === 0) {
+                                continue
+                            }
+                            try {
+                                const res = await utils.gmFetch(`https://api.gofile.io/contents/${childItem.id}?wt=${wt}`, {
+                                    method: 'GET',
+                                    headers: {
+                                        Authorization: `Bearer ${authorization}`,
+                                    },
+                                })
+
+                                if (res.ok) {
+                                    const data = await res.json()
+                                    const currentContentData = data.data
+
+                                    if (data.status === 'ok') {
+                                        await collectItems(currentContentData, currentPath)
+                                    } else {
+                                        console.error(`Failed to fetch folder contents for ${item.name}:`, data.message)
+                                    }
+                                } else {
+                                    console.error(`Failed to fetch folder contents for ${item.name}:`, res.status, res.statusText)
+                                }
+                            } catch (error) {
+                                console.error(`Failed to fetch folder contents for ${item.name}:`, error)
+                            }
+                        }
+                    }
+                }
+            }
+
+            await collectItems(mainContentData)
+            closePopup()
+
+            return { items: tbdItems, files: toDownloadFiles }
+        },
+        recursionDownload(toDownloadFiles, callback) {
+            createPopup({
+                title: utils.getTranslation('successfully_fetched_file_list'),
+                content: `
+                    <div class="space-y-4">
+                        <div class="bg-blue-900 bg-opacity-20 border border-blue-800 rounded-lg p-4">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-info-circle text-blue-400 text-xl"></i>
+                                <p class="text-gray-300 text-sm">
+                                    <span>${utils.getTranslation('are_you_sure_to_download__these_files')}</span>
+                                    <span>${utils.getTranslation('please_make_sure_you_have_configured_download_folder')}</span>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <form id="${GE_GORM_ID_PREFIX}_FILE_LIST" class="space-y-4">
+                        
+                            ${toDownloadFiles.map((file) => `<p>${file}</p>`).join('')}
+
+                            <button
+                                type="submit"
+                                class="w-full py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-300
+                                    ease-in-out text-center text-white font-semibold flex items-center justify-center space-x-2"
+                            >
+                                <i class="fas fa-check"></i>
+                                <span> ${utils.getTranslation('confirm')} </span>
+                            </button>
+                        </form>
+                    </div>
+                `,
+                icon: ICONS.copy_s,
+            })
+
+            const form = document.forms[`${GE_GORM_ID_PREFIX}_FILE_LIST`]
+
+            if (form) {
+                form.addEventListener('submit', (event) => {
+                    event.preventDefault()
+
+                    callback()
+
+                    closePopup()
+                })
+            }
+        },
         sendToABDM(tbdItems) {
             const { abdmPort, abdmDownloadFolder } = utils.getAllSettings('ABDM')
             const cookie = utils.getToken()
@@ -301,9 +426,6 @@
                 try {
                     const res = await utils.gmFetch(`http://localhost:${abdmPort}/start-headless-download`, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
                         body: JSON.stringify(data),
                     })
                     if (res.ok) {
@@ -379,6 +501,8 @@
                     ],
                 }
             })
+
+            console.log('rpcData', rpcData)
 
             try {
                 const res = await utils.gmFetch(rpcAddress, {
@@ -659,18 +783,32 @@
     }
 
     const operations = {
-        handleExport(options) {
+        async handleExport(options) {
             const { selectMode, format, enableRecursion } = options
+            const abdmDownloadFolder = utils.getSettings('ABDM', 'abdmDownloadFolder')
+            const aria2RpcDir = utils.getSettings('Aria2', 'rpcDir')
 
-            const allFiles = appdata.fileManager.mainContent.data.children
+            let tbdItems = []
+            let toDownloadFiles = []
 
-            const selectedKeys = appdata.fileManager.contentsSelected
-            // all file keys or selected file keys
-            const fileKeys = Object.keys(selectMode ? selectedKeys : allFiles)
-            // to be downloaded keys
-            const tbdKeys = fileKeys.filter((key) => allFiles[key].type === 'file')
+            if (enableRecursion) {
+                console.log('[Gofile Enhanced] Recursion download enabled, fetching all items...')
+                const { items, files } = await utils.collectAllItems()
+                tbdItems = items
+                toDownloadFiles = files
+            } else {
+                const allFiles = appdata.fileManager.mainContent.data.children
 
-            if (tbdKeys.length === 0) {
+                const selectedKeys = appdata.fileManager.contentsSelected
+                // all file keys or selected file keys
+                const fileKeys = Object.keys(selectMode ? selectedKeys : allFiles)
+                // to be downloaded keys
+                const tbdKeys = fileKeys.filter((key) => allFiles[key].type === 'file')
+
+                tbdItems = tbdKeys.map((key) => allFiles[key])
+            }
+
+            if (tbdItems.length === 0) {
                 return createNotification(
                     selectMode ? utils.getTranslation('no_file_selected') : utils.getTranslation('empty_folder'),
                     selectMode ? utils.getTranslation('no_file_selected_description') : utils.getTranslation('empty_folder_description'),
@@ -678,19 +816,27 @@
                 )
             }
 
-            const tbdItems = enableRecursion ? [] : tbdKeys.map((key) => allFiles[key])
-
-            console.log('tbdItems', tbdItems)
-
             switch (format) {
                 case 'Direct':
                     utils.goDirectLinks(tbdItems.map((item) => item.link))
                     break
                 case 'ABDM':
-                    utils.sendToABDM(tbdItems)
+                    if (enableRecursion) {
+                        utils.recursionDownload(toDownloadFiles, () => {
+                            utils.sendToABDM(tbdItems.map((item) => ({ ...item, downloadFolder: abdmDownloadFolder + item.downloadFolder })))
+                        })
+                    } else {
+                        utils.sendToABDM(tbdItems)
+                    }
                     break
                 case 'Aria2':
-                    utils.sendToAria2(tbdItems)
+                    if (enableRecursion) {
+                        utils.recursionDownload(toDownloadFiles, () => {
+                            utils.sendToAria2(tbdItems.map((item) => ({ ...item, downloadFolder: aria2RpcDir + item.downloadFolder })))
+                        })
+                    } else {
+                        utils.sendToAria2(tbdItems)
+                    }
                     break
                 case 'IDM':
                     utils.exportToIDM(tbdItems)
@@ -747,7 +893,7 @@
             if (targetNode) {
                 observer.observe(targetNode, config)
             } else {
-                console.log('[Gofile Enhanced] #index_main not found.')
+                console.error('[Gofile Enhanced] #index_main not found.')
             }
         },
     }

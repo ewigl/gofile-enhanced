@@ -1,10 +1,7 @@
-# ################################
-# Gofile
+# ################################ Gofile
 
-# Properties
 # appdata: literally, app data
 
-# Funcs
 # function createNotification(title, message, type = 'success', duration = 3000)
 # function createPopup({ title, content, icon = null, backgroundOpacity = true, showCloseButton = true })
 # function createAlert(type, content)
@@ -16,15 +13,20 @@
 # >
 
 
-# ################################
-# AB Download Manager
+### Rest API
+GET https://api.gofile.io/contents/folderId?wt=wt
+Authorization: Bearer accountToken
 
-# ping, expect a pong.
+# ################################ AB Download Manager
+
+
+### ping, expect a pong.
 POST http://localhost:15151/ping
 
-# send download task
+
+### send download task
 POST http://localhost:15151/start-headless-download
-content-type: application/json
+Content-Type: application/json
 
 {
   "downloadSource": {
@@ -37,25 +39,45 @@ content-type: application/json
 }
 
 
-# ################################
-# Aria2 RPC
+# ################################ Aria2 RPC
 
-# send download task
+
+### send download task
 POST http://localhost:6800/jsonrpc
-content-type: application/json
 
-{
-  "id": "id",
-  "jsonrpc": "2.0",
-  "method": "aria2.addUri",
-  "params": '[
-    "token:your_secret",
-    ["url"],
+[
     {
-      "header": [
-        "Cookie: cookie"
-      ],
-      "dir": "download directory",
+        "id": 1755754283609,
+        "jsonrpc": "2.0",
+        "method": "aria2.addUri",
+        "params": [
+            "token:998486",
+            [
+                "https://cold-na-phx-2.gofile.io/download/web/777.png"
+            ],
+            {
+                "header": [
+                    "Cookie: accountToken=123456798"
+                ],
+                "dir": "D:/Licht/Downloads"
+            }
+        ]
+    },
+    {
+        "id": 1755754283609,
+        "jsonrpc": "2.0",
+        "method": "aria2.addUri",
+        "params": [
+            "token:998486",
+            [
+                "https://cold4.gofile.io/download/web/666.png"
+            ],
+            {
+                "header": [
+                    "Cookie: accountToken=123456789"
+                ],
+                "dir": "D:/Licht/Downloads"
+            }
+        ]
     }
-  ]'
-}
+]
