@@ -312,8 +312,6 @@
                     for (const key of Object.keys(contentData.children)) {
                         const childItem = contentData.children[key]
 
-                        console.log()
-
                         const currentPath = `${parentPath}/${contentData.name}`
 
                         if (childItem.type === 'file') {
@@ -501,8 +499,6 @@
                     ],
                 }
             })
-
-            console.log('rpcData', rpcData)
 
             try {
                 const res = await utils.gmFetch(rpcAddress, {
@@ -792,7 +788,6 @@
             let toDownloadFiles = []
 
             if (enableRecursion) {
-                console.log('[Gofile Enhanced] Recursion download enabled, fetching all items...')
                 const { items, files } = await utils.collectAllItems()
                 tbdItems = items
                 toDownloadFiles = files
