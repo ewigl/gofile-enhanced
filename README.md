@@ -26,7 +26,7 @@ Batch download Gofile files. Supports recursive folder download, Supports direct
 >
 > “递归下载”仅支持 ABDM 与 Aria2 两种下载方式。“递归下载”尚在测试阶段。
 
-需要在脚本设置中正确配置 ABDM 与 Aria2 下载目录（绝对路径）。
+**需要在脚本设置中正确配置 ABDM 与 Aria2 下载目录（绝对路径）。**
 
 如果不配置下载目录，文件可能会下载到你意想不到的地方（一般是你的下载软件所在驱动器根目录）。
 
@@ -38,7 +38,7 @@ Batch download Gofile files. Supports recursive folder download, Supports direct
 >
 > 文件过多时不建议使用，会一次性打开大量浏览器窗口。
 
-需要打开 Gofile 网站设置，允许“弹出式窗口和重定向”权限。
+**需要打开 Gofile 网站设置，允许“弹出式窗口和重定向”权限。**
 
 ![permissions](https://github.com/user-attachments/assets/4676339f-f33f-46e1-92a0-08bb2d65a9c1)
 
@@ -46,7 +46,7 @@ Batch download Gofile files. Supports recursive folder download, Supports direct
 
 > 直接将下载任务发送到 ABDM。
 
-需要安装 ABDM 并启用浏览器集成。
+**需要安装 ABDM 并启用浏览器集成。**
 
 需要正确配置 ABDM 端口。默认端口为 15151。
 
@@ -56,7 +56,7 @@ Batch download Gofile files. Supports recursive folder download, Supports direct
 
 > 直接将下载任务通过 RPC 发送给 Aria2 下载器。
 
-需要正确配置 Aria2 RPC 信息。
+**需要正确配置 Aria2 RPC 信息。**
 
 注意第三方下载器端口可能会与 Aria2 默认配置不同，例如 Motrix 默认端口为 16800。
 
@@ -80,7 +80,7 @@ English description here.
 >
 > "Recursion Download" only supports ABDM and Aria2 download methods. "Recursion Download" is still in testing phase.
 
-You need to properly configure the ABDM and Aria2 download directories (absolute paths) in the settings.
+**You need to properly configure the ABDM and Aria2 download directories (absolute paths) in the settings.**
 
 If you do not configure the download directory, files may be downloaded to unexpected locations (usually the root directory of your download manager's drive).
 
@@ -93,7 +93,7 @@ If you do not configure the download directory, files may be downloaded to unexp
 >
 > Not recommended when there are too many files, a large number of browser tabs will be opened at once.
 
-You need to open Gofile's Site Settings and grant 'Pop-ups and redirects' permission.
+**You need to open Gofile's Site Settings and grant 'Pop-ups and redirects' permission.**
 
 ![permissions](https://github.com/user-attachments/assets/4676339f-f33f-46e1-92a0-08bb2d65a9c1)
 
@@ -101,7 +101,7 @@ You need to open Gofile's Site Settings and grant 'Pop-ups and redirects' permis
 
 > Directly send download tasks to AB Download Manager.
 
-ABDM is REQUIRED and the browser Integration must be enabled.
+**ABDM is REQUIRED and the browser Integration must be enabled.**
 
 Make sure to configure the ABDM port correctly. The default port is 15151.
 
@@ -111,7 +111,7 @@ Make sure to configure the ABDM port correctly. The default port is 15151.
 
 > Directly send the download task to the Aria2 downloader via RPC.
 
-You need to properly configure the Aria2 RPC address and secret.
+**You need to properly configure the Aria2 RPC address and secret.**
 
 Note that the port for third-party downloaders may differ from the default Aria2 configuration,
 for example, Motrix uses port 16800 by default.
