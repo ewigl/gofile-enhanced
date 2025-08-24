@@ -72,13 +72,13 @@ Batch download Gofile files. Supports recursive folder download, Supports direct
 
 English description here.
 
-### Recursion Download
+### Recursive Download
 
-> Click the "Recursion Download" button, the script will automatically fetch **all** files and folder contents.
+> Click the "Recursive Download" button, the script will automatically fetch **all** files and folder contents.
 >
 > A window will pop up displaying all file lists, and you can start downloading after confirming everything is correct.
 >
-> "Recursion Download" only supports ABDM and Aria2 download methods. "Recursion Download" is still in testing phase.
+> "Recursive Download" only supports ABDM and Aria2 download methods. "Recursion Download" is still in testing phase.
 
 **You need to properly configure the ABDM and Aria2 download directories (absolute paths) in the settings.**
 

@@ -124,7 +124,7 @@
             no_file_selected_description: 'Please select at least one file',
             please_make_sure_you_have_configured_download_folder: 'Please make sure you have configured the download folder',
             reset_aria2: 'Reset Aria2',
-            recursion_download: 'Recursion Download',
+            recursion_download: 'Recursive Download',
             send_all: 'Send All',
             send_selected: 'Send Selected',
             success: 'Success',
