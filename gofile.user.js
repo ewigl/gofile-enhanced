@@ -2,7 +2,7 @@
 // @name         GoFile 增强
 // @name:en      GoFile Enhanced
 // @namespace    https://github.com/ewigl/gofile-enhanced
-// @version      0.7.8
+// @version      0.7.9
 // @description  GoFile 文件批量下载。支持递归下载文件夹内容、直链下载。可以配合 AB Download Manager、Aria2、IDM 等下载器使用。
 // @description:en  Directly batch-download GoFiles. Supports recursive folder download, Supports direct links. Built-in support for download managers like AB Download Manager, Aria2, and IDM.
 // @author       Licht
@@ -67,8 +67,8 @@
             loading_please_wait: '正在加载，请稍候',
             no_file_selected: '未选择文件',
             no_file_selected_description: '请至少选择一个文件',
-            please_make_sure_you_have_configured_download_folder: '请确保您已正确配置下载目录',
-            recursion_download: '递归下载',
+            please_make_sure_you_have_configured_download_folder: '请确保已正确配置下载目录。',
+            recursive_download: '递归下载',
             reset_aria2: '重置 Aria2',
             send_all: '发送全部',
             send_selected: '发送选中',
@@ -122,9 +122,9 @@
             loading_please_wait: 'Loading, please wait',
             no_file_selected: 'No File Selected',
             no_file_selected_description: 'Please select at least one file',
-            please_make_sure_you_have_configured_download_folder: 'Please make sure you have configured the download folder',
+            please_make_sure_you_have_configured_download_folder: 'Please make sure you have configured the download folder.',
             reset_aria2: 'Reset Aria2',
-            recursion_download: 'Recursive Download',
+            recursive_download: 'Recursive Download',
             send_all: 'Send All',
             send_selected: 'Send Selected',
             success: 'Success',
@@ -359,7 +359,7 @@
 
             return { items: tbdItems, files: toDownloadFiles }
         },
-        recursionDownload(toDownloadFiles, callback) {
+        recursiveDownload(toDownloadFiles, callback) {
             const fileList = toDownloadFiles.sort()
 
             createPopup({
@@ -658,8 +658,8 @@
                 },
             })
 
-            const abdmRecursionDownloadButton = utils.createButton({
-                text: utils.getTranslation('recursion_download'),
+            const abdmRecursiveDownloadButton = utils.createButton({
+                text: utils.getTranslation('recursive_download'),
                 icon: ICONS.copy_s,
                 onClick: operations.handleExport.bind(null, {
                     enableRecursion: true,
@@ -675,8 +675,8 @@
                 },
             })
 
-            const aria2RecursionDownloadButton = utils.createButton({
-                text: utils.getTranslation('recursion_download'),
+            const aria2RecursiveDownloadButton = utils.createButton({
+                text: utils.getTranslation('recursive_download'),
                 icon: ICONS.copy_s,
                 onClick: operations.handleExport.bind(null, {
                     enableRecursion: true,
@@ -702,12 +702,12 @@
 
             switch (downloader) {
                 case 'ABDM':
-                    additionalButtons.push(abdmRecursionDownloadButton)
+                    additionalButtons.push(abdmRecursiveDownloadButton)
                     additionalButtons.push(settingsButton)
                     additionalButtons.push(testABDMButton)
                     break
                 case 'Aria2':
-                    additionalButtons.push(aria2RecursionDownloadButton)
+                    additionalButtons.push(aria2RecursiveDownloadButton)
                     additionalButtons.push(settingsButton)
                     additionalButtons.push(testAria2Button)
                     additionalButtons.push(rpcResetButton)
@@ -824,7 +824,7 @@
                     break
                 case 'ABDM':
                     if (enableRecursion) {
-                        utils.recursionDownload(toDownloadFiles, () => {
+                        utils.recursiveDownload(toDownloadFiles, () => {
                             utils.sendToABDM(tbdItems.map((item) => ({ ...item, downloadFolder: abdmDownloadFolder + item.downloadFolder })))
                         })
                     } else {
@@ -833,7 +833,7 @@
                     break
                 case 'Aria2':
                     if (enableRecursion) {
-                        utils.recursionDownload(toDownloadFiles, () => {
+                        utils.recursiveDownload(toDownloadFiles, () => {
                             utils.sendToAria2(tbdItems.map((item) => ({ ...item, downloadFolder: aria2RpcDir + item.downloadFolder })))
                         })
                     } else {
