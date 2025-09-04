@@ -1,20 +1,21 @@
 // ==UserScript==
-// @name         GoFile 增强
-// @name:en      GoFile Enhanced
-// @namespace    https://github.com/ewigl/gofile-enhanced
-// @version      0.7.9
-// @description  GoFile 文件批量下载。支持递归下载文件夹内容、直链下载。可以配合 AB Download Manager、Aria2、IDM 等下载器使用。
+// @name            GoFile 增强
+// @name:en         GoFile Enhanced
+// @namespace       https://github.com/ewigl/gofile-enhanced
+// @version         0.7.9
+// @description     GoFile 文件批量下载。支持递归下载文件夹内容、直链下载。可以配合 AB Download Manager、Aria2、IDM 等下载器使用。
 // @description:en  Directly batch-download GoFiles. Supports recursive folder download, Supports direct links. Built-in support for download managers like AB Download Manager, Aria2, and IDM.
-// @author       Licht
-// @license      MIT
-// @homepage     https://github.com/ewigl/gofile-enhanced
-// @match        http*://gofile.io/*
-// @icon         https://gofile.io/dist/img/favicon16.png
-// @connect      localhost
-// @connect      *
-// @grant        GM_getValue
-// @grant        GM_setValue
-// @grant        GM_xmlhttpRequest
+// @author          Licht
+// @license         MIT
+// @homepage        https://github.com/ewigl/gofile-enhanced
+// @homepageURL     https://github.com/ewigl/gofile-enhanced
+// @match           http*://gofile.io/*
+// @icon            https://gofile.io/dist/img/favicon16.png
+// @connect         localhost
+// @connect         *
+// @grant           GM_getValue
+// @grant           GM_setValue
+// @grant           GM_xmlhttpRequest
 // ==/UserScript==
 
 ;(function () {
