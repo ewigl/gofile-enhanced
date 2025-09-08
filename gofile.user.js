@@ -2,7 +2,7 @@
 // @name            GoFile Enhanced
 // @name:zh-CN      GoFile 增强
 // @namespace       https://github.com/ewigl/gofile-enhanced
-// @version         0.8.0
+// @version         0.8.1
 // @description     Directly batch-download GoFiles. Supports recursive folder download, Supports direct links. Built-in support for download managers like AB Download Manager, Aria2, and IDM.
 // @description:zh-CN     GoFile 文件批量下载。支持递归下载文件夹内容、直链下载。可以配合 AB Download Manager、Aria2、IDM 等下载器使用。
 // @author          Licht
@@ -307,8 +307,6 @@
                     ?.split('=')[1] || ''
             const wt = appdata.wt
 
-            let toDownloadFiles = []
-
             const collectItems = async (contentData, parentPath = '') => {
                 if (contentData.childrenCount > 0) {
                     for (const key of Object.keys(contentData.children)) {
@@ -318,7 +316,6 @@
 
                         if (childItem.type === 'file') {
                             tbdItems.push({ ...childItem, downloadFolder: currentPath })
-                            toDownloadFiles.push(`${currentPath}/${childItem.name}`)
                         } else if (childItem.type === 'folder') {
                             if (childItem.childrenCount === 0) {
                                 continue
@@ -358,10 +355,15 @@
             await collectItems(mainContentData)
             closePopup()
 
-            return { items: tbdItems, files: toDownloadFiles }
+            return { items: tbdItems }
         },
-        recursiveDownload(toDownloadFiles, callback) {
-            const fileList = toDownloadFiles.sort()
+        recursiveDownload(tbdItems, callback) {
+            const fileList = tbdItems.map((item) => {
+                return {
+                    name: item.name,
+                    path: item.downloadFolder || '',
+                }
+            })
 
             createPopup({
                 title: utils.getTranslation('successfully_fetched_file_list'),
@@ -379,7 +381,7 @@
                         
                         <form id="${GE_GORM_ID_PREFIX}_FILE_LIST" class="space-y-4">
                         
-                            ${fileList.map((file) => `<p>${file}</p>`).join('')}
+                            ${fileList.map((file) => `<p>${file.path}/<span class="text-blue-500">${file.name}</span></p>`).join('')}
 
                             <button
                                 type="submit"
@@ -793,12 +795,10 @@
             const aria2RpcDir = utils.getSettings('Aria2', 'rpcDir')
 
             let tbdItems = []
-            let toDownloadFiles = []
 
             if (enableRecursion) {
-                const { items, files } = await utils.collectAllItems()
+                const { items } = await utils.collectAllItems()
                 tbdItems = items
-                toDownloadFiles = files
             } else {
                 const allFiles = appdata.fileManager.mainContent.data.children
 
@@ -825,7 +825,7 @@
                     break
                 case 'ABDM':
                     if (enableRecursion) {
-                        utils.recursiveDownload(toDownloadFiles, () => {
+                        utils.recursiveDownload(tbdItems, () => {
                             utils.sendToABDM(tbdItems.map((item) => ({ ...item, downloadFolder: abdmDownloadFolder + item.downloadFolder })))
                         })
                     } else {
@@ -834,7 +834,7 @@
                     break
                 case 'Aria2':
                     if (enableRecursion) {
-                        utils.recursiveDownload(toDownloadFiles, () => {
+                        utils.recursiveDownload(tbdItems, () => {
                             utils.sendToAria2(tbdItems.map((item) => ({ ...item, downloadFolder: aria2RpcDir + item.downloadFolder })))
                         })
                     } else {
