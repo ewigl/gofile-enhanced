@@ -28,7 +28,7 @@ If you do not configure the download directory, files may be downloaded to unexp
 
 ### Direct
 
-> Direct link download. The browser will handle download tasks if ABDM, FDM or IDM browser integration is enabled, download tasks will be automatically taken over by these downloaders.
+> Direct link download.
 >
 > Not recommended when there are too many files, a large number of browser tabs will be opened at once.
 
