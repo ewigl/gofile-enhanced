@@ -4,6 +4,8 @@
 
 [Greasy Fork](https://greasyfork.org/scripts/515250)
 
+[![中文文档](https://img.shields.io/badge/中文文档-blue)](https://github.com/ewigl/gofile-enhanced/blob/main/README_CN.md)
+
 ---
 
 Batch download Gofile files. Supports recursive folder download, Supports direct links. Supports [AB Download Manager](https://github.com/amir1376/ab-download-manager), [Internet Download Manager](https://www.internetdownloadmanager.com/) and [Aria2](https://github.com/aria2/aria2) related download managers.
