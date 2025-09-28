@@ -358,12 +358,13 @@
             return { items: tbdItems }
         },
         recursiveDownload(tbdItems, callback) {
-            const fileList = tbdItems.map((item) => {
+            const fileItems = tbdItems.map((item) => {
                 return {
                     name: item.name,
                     path: item.downloadFolder || '',
                 }
             })
+            const fileList = fileItems.map((file) => `<p>${file.path}/<span class="text-blue-500">${file.name}</span></p>`).sort()
 
             createPopup({
                 title: utils.getTranslation('successfully_fetched_file_list'),
@@ -381,7 +382,7 @@
                         
                         <form id="${GE_GORM_ID_PREFIX}_FILE_LIST" class="space-y-4">
                         
-                            ${fileList.map((file) => `<p>${file.path}/<span class="text-blue-500">${file.name}</span></p>`).join('')}
+                            ${fileList.join('')}
 
                             <button
                                 type="submit"
