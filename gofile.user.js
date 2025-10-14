@@ -427,9 +427,11 @@
                         },
                     },
                     name: item.name,
-                    folder: item.downloadFolder || abdmDownloadFolder,
+                    folder: item.downloadFolder || (abdmDownloadFolder === '' ? '/' : abdmDownloadFolder),
                 }
             })
+
+            // console.log('[GoFile Enhanced] Sending to ABDM:', postDatas)
 
             postDatas.forEach(async (data) => {
                 try {
@@ -441,9 +443,11 @@
                         createNotification(utils.getTranslation('success'), `${data.name} ${utils.getTranslation('successfully_sent_to_abdm')}`, 'success')
                     } else {
                         createNotification(utils.getTranslation('error'), `${data.name} ${utils.getTranslation('failed_to_send_to_abdm')} / ${res.status} - ${res.statusText}`, 'error')
+                        console.error('[GoFile Enhanced] Error sending to ABDM:', res)
                     }
                 } catch (error) {
                     createNotification(utils.getTranslation('error'), `${data.name}  ${utils.getTranslation('failed_to_send_to_abdm')}`, 'error')
+                    console.error('[GoFile Enhanced] Error sending to ABDM:', error)
                 }
             })
         },
