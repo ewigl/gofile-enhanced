@@ -24,7 +24,7 @@ Batch download Gofile files. Supports recursive folder download, Supports direct
 
 **You need to properly configure the ABDM and Aria2 download directories (absolute paths) in the settings.**
 
-If you do not configure the download directory, files may be downloaded to unexpected locations (usually the root directory of your download manager's drive).
+If you do not configure the download directory, files may be downloaded to unexpected locations (usually the root directory of your download manager's or your drive's).
 
 ![recursion](https://github.com/user-attachments/assets/3d1aaa20-d889-4070-8018-33e7129ba9a9)
 
