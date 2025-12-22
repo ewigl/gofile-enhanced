@@ -14,8 +14,9 @@
 
 
 ### Rest API
-GET https://api.gofile.io/contents/folderId?wt=wt
+GET https://api.gofile.io/contents/contentId
 Authorization: Bearer accountToken
+x-website-token: appdata.wt
 
 # ################################ AB Download Manager
 
