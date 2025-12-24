@@ -2,7 +2,7 @@
 // @name               GoFile Enhanced
 // @name:zh-CN         GoFile 增强
 // @namespace          https://github.com/ewigl/gofile-enhanced
-// @version            0.8.2
+// @version            0.9.0
 // @description        Directly batch-download GoFiles. Supports recursive folder download, Supports direct links. Built-in support for download managers like AB Download Manager, Aria2, and IDM.
 // @description:zh-CN  GoFile 文件批量下载。支持递归下载文件夹内容、直链下载。可以配合 AB Download Manager、Aria2、IDM 等下载器使用。
 // @author             Licht
@@ -54,6 +54,9 @@
             confirm: '确定',
             download_all: '下载全部',
             download_selected: '下载选中',
+            download_interval: '下载间隔（毫秒）',
+            download_interval_placeholder: '默认为 0（无延迟）',
+            direct_settings: 'Direct 下载设置',
             empty_folder: '文件夹为空',
             empty_folder_description: '当前文件夹内容为空',
             error: '错误',
@@ -109,6 +112,9 @@
             confirm: 'Confirm',
             download_all: 'Download All',
             download_selected: 'Download Selected',
+            download_interval: 'Download Interval (ms)',
+            download_interval_placeholder: 'Default is 0 (no delay)',
+            direct_settings: 'Direct Download Settings',
             empty_folder: 'Empty Folder',
             empty_folder_description: 'The current folder is empty',
             error: 'Error',
@@ -165,6 +171,21 @@
     }
 
     const GE_CONFIG = {
+        Direct: {
+            name: 'Direct',
+            id: 'Direct',
+            desc: 'Direct Download',
+            homepage: '',
+            settings: {
+                downloadInterval: {
+                    key: 'direct_download_interval',
+                    defaultValue: '0',
+                    i18nKey: 'download_interval',
+                    icon: ICONS.gear_s,
+                    placeholderI18nKey: 'download_interval_placeholder',
+                },
+            },
+        },
         ABDM: {
             name: 'ABDM',
             id: 'ABDM',
@@ -288,10 +309,24 @@
             return I18N[lang][key] || key
         },
         getToken: () => document.cookie,
-        goDirectLinks(links) {
-            links.forEach((link) => {
-                window.open(link, link)
-            })
+        async goDirectLinks(links) {
+            const interval = parseInt(utils.getSettings('Direct', 'downloadInterval') || '0', 10)
+
+            if (interval <= 0) {
+                // 如果没有设置间隔或间隔为0，直接打开所有链接
+                links.forEach((link) => {
+                    window.open(link, link)
+                })
+            } else {
+                // 如果有间隔，按间隔依次打开
+                for (let i = 0; i < links.length; i++) {
+                    window.open(links[i], links[i])
+                    if (i < links.length - 1) {
+                        // 最后一个链接不需要等待
+                        await new Promise((resolve) => setTimeout(resolve, interval))
+                    }
+                }
+            }
         },
         async collectAllItems() {
             createAlert('loading', utils.getTranslation('fetching_file_list'))
@@ -315,7 +350,10 @@
                         const currentPath = `${parentPath}/${contentData.name}`
 
                         if (childItem.type === 'file') {
-                            tbdItems.push({ ...childItem, downloadFolder: currentPath })
+                            tbdItems.push({
+                                ...childItem,
+                                downloadFolder: currentPath,
+                            })
                         } else if (childItem.type === 'folder') {
                             if (childItem.childrenCount === 0) {
                                 continue
@@ -380,9 +418,9 @@
                                 </p>
                             </div>
                         </div>
-                        
+
                         <form id="${GE_GORM_ID_PREFIX}_FILE_LIST" class="space-y-4">
-                        
+
                             ${fileList.join('')}
 
                             <button
@@ -550,7 +588,9 @@
             utils.saveAsFile(IDMFormatContent, 'ef2')
         },
         saveAsFile(content, fileExtension) {
-            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+            const blob = new Blob([content], {
+                type: 'text/plain;charset=utf-8',
+            })
             const url = URL.createObjectURL(blob)
             const link = document.createElement('a')
             link.href = url
@@ -710,6 +750,9 @@
             })
 
             switch (downloader) {
+                case 'Direct':
+                    additionalButtons.push(settingsButton)
+                    break
                 case 'ABDM':
                     additionalButtons.push(abdmRecursiveDownloadButton)
                     additionalButtons.push(settingsButton)
@@ -746,10 +789,10 @@
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <i class="${icon} text-gray-400"></i>
                     </div>
-                    <input 
-                        type="text" 
-                        id="${key}" 
-                        key="${key}" 
+                    <input
+                        type="text"
+                        id="${key}"
+                        key="${key}"
                         class="w-full pl-10 pr-3 py-2 bg-gray-700 rounded-lg border border-gray-600 focus:ring-2
                             focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition duration-200 text-white placeholder-gray-400"
                         value="${utils.getValue(key)}"
@@ -764,6 +807,9 @@
 
             return `
                 <div class="space-y-4">
+                    ${
+                        config.homepage
+                            ? `
                     <div class="bg-blue-900 bg-opacity-20 border border-blue-800 rounded-lg p-4">
                         <div class="flex items-center space-x-3">
                             <i class="fas fa-info-circle text-blue-400 text-xl"></i>
@@ -772,6 +818,9 @@
                             </p>
                         </div>
                     </div>
+                    `
+                            : ''
+                    }
 
                     <form id="${GE_GORM_ID_PREFIX}_${config.id}" class="space-y-4">
 
@@ -827,12 +876,17 @@
 
             switch (format) {
                 case 'Direct':
-                    utils.goDirectLinks(tbdItems.map((item) => item.link))
+                    await utils.goDirectLinks(tbdItems.map((item) => item.link))
                     break
                 case 'ABDM':
                     if (enableRecursion) {
                         utils.recursiveDownload(tbdItems, () => {
-                            utils.sendToABDM(tbdItems.map((item) => ({ ...item, downloadFolder: abdmDownloadFolder + item.downloadFolder })))
+                            utils.sendToABDM(
+                                tbdItems.map((item) => ({
+                                    ...item,
+                                    downloadFolder: abdmDownloadFolder + item.downloadFolder,
+                                }))
+                            )
                         })
                     } else {
                         utils.sendToABDM(tbdItems)
@@ -841,7 +895,12 @@
                 case 'Aria2':
                     if (enableRecursion) {
                         utils.recursiveDownload(tbdItems, () => {
-                            utils.sendToAria2(tbdItems.map((item) => ({ ...item, downloadFolder: aria2RpcDir + item.downloadFolder })))
+                            utils.sendToAria2(
+                                tbdItems.map((item) => ({
+                                    ...item,
+                                    downloadFolder: aria2RpcDir + item.downloadFolder,
+                                }))
+                            )
                         })
                     } else {
                         utils.sendToAria2(tbdItems)
