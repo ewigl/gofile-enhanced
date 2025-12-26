@@ -27,10 +27,10 @@ If you did not set the download folder, files may be downloaded to unexpected lo
 ### Direct
 
 > Downloads files via direct links.
->
-> Not recommended when there are too many files, as a large number of browser tabs will be opened at once.
 
 **Open Gofile Site Settings, grant the "Pop-ups and redirects" permission.**
+
+Not recommended when there are too many files, as a large number of browser tabs will be opened at once.
 
 ![permissions](https://github.com/user-attachments/assets/4676339f-f33f-46e1-92a0-08bb2d65a9c1)
 
