@@ -4,7 +4,7 @@
 
 [Greasy Fork](https://greasyfork.org/scripts/515250)
 
-[![中文文档](https://img.shields.io/badge/中文文档-blue)](https://github.com/ewigl/gofile-enhanced/blob/main/README_CN.md)
+[![中文文档](https://img.shields.io/badge/中文文档-blue)](https://ewigl.github.io/projects/gofile-enhanced/)
 
 ---
 
