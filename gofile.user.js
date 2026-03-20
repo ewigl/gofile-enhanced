@@ -299,14 +299,6 @@
             const mainContentData = appdata.fileManager.mainContent.data
             const tbdItems = []
 
-            const cookie = utils.getToken()
-            const authorization =
-                cookie
-                    .split(';')
-                    .find((row) => row.startsWith('accountToken='))
-                    ?.split('=')[1] || ''
-            const wt = appdata.wt
-
             const collectItems = async (contentData, parentPath = '') => {
                 if (contentData.childrenCount > 0) {
                     for (const key of Object.keys(contentData.children)) {
@@ -321,13 +313,6 @@
                                 continue
                             }
                             try {
-                                // const res = await utils.gmFetch(`https://api.gofile.io/contents/${childItem.id}`, {
-                                //     method: 'GET',
-                                //     headers: {
-                                //         Authorization: `Bearer ${authorization}`,
-                                //         'x-website-token': wt,
-                                //     },
-                                // })
                                 // API
                                 const res = await getContent(childItem.id)
 
