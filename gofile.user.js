@@ -320,13 +320,8 @@
                                     const currentContentData = res.data
                                     await collectItems(currentContentData, currentPath)
                                 } else {
-                                    createNotification(
-                                        utils.getTranslation('error'),
-                                        `${utils.getTranslation('failed_to_fetch_folder_content')} ${childItem.name}: ${data.message}`,
-                                        'error'
-                                    )
+                                    createNotification(utils.getTranslation('error'), `${utils.getTranslation('failed_to_fetch_folder_content')} ${childItem.name}: ${data.message}`, 'error')
                                 }
-
                             } catch (error) {
                                 createNotification(utils.getTranslation('error'), `${utils.getTranslation('failed_to_fetch_folder_content')} ${childItem.name}`, 'error')
                             }
@@ -803,7 +798,7 @@
                 return createNotification(
                     selectMode ? utils.getTranslation('no_file_selected') : utils.getTranslation('empty_folder'),
                     selectMode ? utils.getTranslation('no_file_selected_description') : utils.getTranslation('empty_folder_description'),
-                    'warning'
+                    'warning',
                 )
             }
 
