@@ -1,5 +1,7 @@
 # ################################ Gofile
 
+# https://gofile.io/dist/js/filemanager.js
+
 # appdata: literally, app data
 
 # function createNotification(title, message, type = 'success', duration = 3000)
@@ -12,18 +14,10 @@
 # cookie: accountToken=ABCDEFG
 # >
 
-
-### Rest API
-GET https://api.gofile.io/contents/contentId
-Authorization: Bearer accountToken
-x-website-token: appdata.wt
-
 # ################################ AB Download Manager
 
-
-### ping, expect a pong.
+# ping, expect a pong.
 POST http://localhost:15151/ping
-
 
 ### send download task
 POST http://localhost:15151/start-headless-download
@@ -39,9 +33,7 @@ Content-Type: application/json
   "name": "file name"
 }
 
-
 # ################################ Aria2 RPC
-
 
 ### send download task
 POST http://localhost:6800/jsonrpc
