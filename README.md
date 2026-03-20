@@ -2,13 +2,15 @@
 
 [GitHub](https://github.com/ewigl/gofile-enhanced)
 
-[Greasy Fork](https://greasyfork.org/scripts/515250)
-
 [![中文文档](https://img.shields.io/badge/中文文档-blue)](https://ewigl.github.io/projects/gofile-enhanced/)
 
----
+## Install
 
-Batch download Gofile files. Supports recursive folder download, Supports direct links. Supports [AB Download Manager](https://github.com/amir1376/ab-download-manager), [Internet Download Manager](https://www.internetdownloadmanager.com/) and [Aria2](https://github.com/aria2/aria2) related download managers.
+[Greasy Fork](https://greasyfork.org/scripts/515250)
+
+## Features
+
+A powerful userscript for batch-downloading Gofile content. It supports recursive folder structures and direct link extraction, with native integration for popular download managers including [AB Download Manager](https://github.com/amir1376/ab-download-manager), [Aria2](https://github.com/aria2/aria2) and [Internet Download Manager](https://www.internetdownloadmanager.com/).
 
 ![cover](https://github.com/user-attachments/assets/4b3059dc-5f87-490d-91c0-10a0ee9c26cf)
 
