@@ -2,7 +2,7 @@
 // @name               GoFile Enhanced
 // @name:zh-CN         GoFile 增强
 // @namespace          https://github.com/ewigl/gofile-enhanced
-// @version            0.8.2
+// @version            0.8.5
 // @description        Directly batch-download GoFiles. Supports recursive folder download, Supports direct links. Built-in support for download managers like AB Download Manager, Aria2, and IDM.
 // @description:zh-CN  GoFile 文件批量下载。支持递归下载文件夹内容、直链下载。可以配合 AB Download Manager、Aria2、IDM 等下载器使用。
 // @author             Licht
@@ -321,30 +321,27 @@
                                 continue
                             }
                             try {
-                                const res = await utils.gmFetch(`https://api.gofile.io/contents/${childItem.id}`, {
-                                    method: 'GET',
-                                    headers: {
-                                        Authorization: `Bearer ${authorization}`,
-                                        'x-website-token': wt,
-                                    },
-                                })
+                                // const res = await utils.gmFetch(`https://api.gofile.io/contents/${childItem.id}`, {
+                                //     method: 'GET',
+                                //     headers: {
+                                //         Authorization: `Bearer ${authorization}`,
+                                //         'x-website-token': wt,
+                                //     },
+                                // })
+                                // API
+                                const res = await getContent(childItem.id)
 
-                                if (res.ok) {
-                                    const data = await res.json()
-                                    const currentContentData = data.data
-
-                                    if (data.status === 'ok') {
-                                        await collectItems(currentContentData, currentPath)
-                                    } else {
-                                        createNotification(
-                                            utils.getTranslation('error'),
-                                            `${utils.getTranslation('failed_to_fetch_folder_content')} ${childItem.name}: ${data.message}`,
-                                            'error'
-                                        )
-                                    }
+                                if (res.status === 'ok') {
+                                    const currentContentData = res.data
+                                    await collectItems(currentContentData, currentPath)
                                 } else {
-                                    createNotification(utils.getTranslation('error'), `${utils.getTranslation('failed_to_fetch_folder_content')} / ${res.status} - ${res.statusText}`, 'error')
+                                    createNotification(
+                                        utils.getTranslation('error'),
+                                        `${utils.getTranslation('failed_to_fetch_folder_content')} ${childItem.name}: ${data.message}`,
+                                        'error'
+                                    )
                                 }
+
                             } catch (error) {
                                 createNotification(utils.getTranslation('error'), `${utils.getTranslation('failed_to_fetch_folder_content')} ${childItem.name}`, 'error')
                             }
