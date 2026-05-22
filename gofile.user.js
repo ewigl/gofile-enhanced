@@ -3,7 +3,7 @@
 // @name:zh-CN         GoFile 增强
 // @namespace          https://github.com/ewigl/gofile-enhanced
 // @version            0.8.5
-// @description        Directly batch-download GoFiles. Supports recursive folder download, Supports direct links. Built-in support for download managers like AB Download Manager, Aria2, and IDM.
+// @description        Directly batch-download GoFiles. Automatically bypass high traffic alert. Supports recursive folder download, Supports direct links. Built-in support for download managers like AB Download Manager, Aria2, and IDM.
 // @description:zh-CN  GoFile 文件批量下载。支持递归下载文件夹内容、直链下载。可以配合 AB Download Manager、Aria2、IDM 等下载器使用。
 // @author             Licht
 // @license            MIT
