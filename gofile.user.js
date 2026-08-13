@@ -62,7 +62,7 @@
             config: '配置',
             confirm: '确定',
             download: "下载",
-            download_selected: '下载选中',
+            download_method: '下载方式',
             error: '错误',
             failed_to_fetch_folder_content: '获取文件夹内容失败',
             failed_to_send_to_abdm: '未成功发送至 ABDM',
@@ -106,7 +106,7 @@
             config: 'Config',
             confirm: 'Confirm',
             download: "Download",
-            download_selected: 'Download Selected',
+            download_method: 'Download Method',
             error: 'Error',
             failed_to_fetch_folder_content: 'Failed to fetch folder content',
             failed_to_send_to_abdm: 'Failed to send to ABDM',
@@ -131,8 +131,8 @@
     }
 
     const ICONS = {
+        download: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-to-line-icon lucide-arrow-down-to-line size-5"><path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/></svg>',
         logo: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles-icon lucide-sparkles size-5"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/></svg>',
-        downloadSelected: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-to-line-icon lucide-arrow-down-to-line size-5"><path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/></svg>',
         settings: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bolt-icon lucide-bolt size-5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><circle cx="12" cy="12" r="4"/></svg>',
     }
 
@@ -200,10 +200,6 @@
                             status: response.status,
                             statusText: response.statusText,
                             json: () => Promise.resolve(JSON.parse(response.responseText)),
-                            // text: () => Promise.resolve(response.responseText),
-                            // xml: () => Promise.resolve(response.responseXML),
-                            // url: response.finalUrl,
-                            // raw: response,
                         })
                     },
                     onerror: (err) => reject(err),
@@ -435,7 +431,6 @@
                     },
                     name: item.name,
                     folder: item.downloadFolder || (abdmDownloadFolder === '' ? '/' : abdmDownloadFolder),
-                    // Automaticaly start download
                     startDownload: true
                 }
             })
@@ -623,11 +618,11 @@
         },
         getDownloadSelectedButton() {
             const button = utils.getActionButton({
-                icon: ICONS.downloadSelected,
-                label: utils.getTranslation('download_selected'),
+                icon: ICONS.download,
+                label: utils.getTranslation('download'),
                 onClick: (event) => {
                     utils.openActionMenu(event.currentTarget, [
-                        { type: 'label', label: utils.getTranslation('download_selected') },
+                        { type: 'label', label: utils.getTranslation('download_method') },
                         ...['Direct', 'ABDM', 'Aria2', 'IDM'].map((format) => ({
                             label: format,
                             onClick: () => operations.handleExport({
@@ -847,43 +842,29 @@
                 });
             }
 
+            const dispatchToDownloader = (folderPrefix, sendFn) => {
+                const preparedItems = tbdItems.map((item) => ({
+                    ...item,
+                    downloadFolder: folderPrefix + item.downloadFolder,
+                }))
+
+                if (!shouldShowFileList) {
+                    sendFn(preparedItems)
+                    return
+                }
+
+                utils.recursiveDownload(tbdItems, () => sendFn(preparedItems))
+            }
+
             switch (format) {
                 case 'Direct':
                     utils.goDirectLinks(tbdItems.map((item) => item.link))
                     break
                 case 'ABDM':
-                    if (!shouldShowFileList) {
-                        utils.sendToABDM(
-                            tbdItems.map(
-                                (item) => ({ ...item, downloadFolder: abdmDownloadFolder + item.downloadFolder })
-                            )
-                        )
-                        break
-                    }
-                    utils.recursiveDownload(
-                        tbdItems,
-                        () => utils.sendToABDM(
-                            tbdItems.map(
-                                (item) => ({ ...item, downloadFolder: abdmDownloadFolder + item.downloadFolder })
-                            )
-                        )
-                    )
+                    dispatchToDownloader(abdmDownloadFolder, utils.sendToABDM)
                     break
                 case 'Aria2':
-                    if (!shouldShowFileList) {
-                        utils.sendToAria2(
-                            tbdItems.map(
-                                (item) => ({ ...item, downloadFolder: aria2RpcDir + item.downloadFolder }))
-                        )
-                        break
-                    }
-                    utils.recursiveDownload(
-                        tbdItems,
-                        () => utils.sendToAria2(
-                            tbdItems.map(
-                                (item) => ({ ...item, downloadFolder: aria2RpcDir + item.downloadFolder }))
-                        )
-                    )
+                    dispatchToDownloader(aria2RpcDir, utils.sendToAria2)
                     break
                 case 'IDM':
                     utils.exportToIDM(tbdItems)
