@@ -382,13 +382,21 @@
                     path: utils.maskFolderPath(item.downloadFolder || ''),
                 }
             })
-            const fileList = fileItems.map((file) => {
-                const pathWithBoldSeparators = file.path.replace(/\//g, '<span class="text-brand-300"> / </span>')
-                return `<p>${pathWithBoldSeparators}<span class="text-brand-300"> / </span><span class="text-brand-300">${file.name}</span></p>`
-            }).sort()
+            const fileList = fileItems
+                .map((file) => {
+                    const pathWithBoldSeparators = file.path.replace(/\//g, '<span class="text-brand-300"> / </span>')
+                    return `${pathWithBoldSeparators}<span class="text-brand-300"> / </span><span class="text-brand-300">${file.name}</span>`
+                })
+                .sort()
+                .map((entry, index) => `
+                    <p class="flex items-center gap-2">
+                        <span class="shrink-0 rounded-md px-2 py-1 font-mono text-xs font-bold tracking-wide bg-sky-500/10 text-sky-400 ring-1 ring-sky-500/30">${index + 1}</span>
+                        <span>${entry}</span>
+                    </p>
+                `)
 
             popup.open({
-                title: utils.getTranslation('file_list'),
+                title: `${utils.getTranslation('file_list')} (${fileItems.length})`,
                 size: "2xl",
                 content: `
                 <div class="mb-3 flex items-start gap-2.5 rounded-xl border p-3.5 border-amber-500/20 bg-amber-500/10">
@@ -398,7 +406,7 @@
                     </div>
                 </div>
                 <div class="flex items-start gap-3">
-                    <div class="text-sm leading-relaxed text-slate-300">
+                    <div class="text-sm leading-relaxed text-slate-300 space-y-1.5">
                         ${fileList.join('')}
                     </div>
                 </div>`,
