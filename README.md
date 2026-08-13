@@ -1,13 +1,12 @@
 # Gofile Enhanced
 
-A powerful userscript for batch-downloading Gofile content. It supports recursive folder structures and direct link extraction, automatically bypass high traffic alert, with native integration for popular download managers including [AB Download Manager](https://github.com/amir1376/ab-download-manager), [Aria2](https://github.com/aria2/aria2) and [Internet Download Manager](https://www.internetdownloadmanager.com/).
-
+Batch-download GoFiles. Folder download. Automatically bypass high traffic alert. Use direct links. Built-in support for download managers like [AB Download Manager](https://github.com/amir1376/ab-download-manager), [Aria2](https://github.com/aria2/aria2) and [Internet Download Manager](https://www.internetdownloadmanager.com/).
 
 [![中文文档](https://img.shields.io/badge/中文文档-blue)](https://ewigl.github.io/projects/gofile-enhanced/)
 
 ---
 
-![cover](https://github.com/user-attachments/assets/4b3059dc-5f87-490d-91c0-10a0ee9c26cf)
+![cover](https://github.com/user-attachments/assets/b6831bfa-6838-412e-b71a-a1ed802ecee8)
 
 ## Install
 
@@ -17,49 +16,64 @@ A powerful userscript for batch-downloading Gofile content. It supports recursiv
 
 ## Usage
 
-### Recursive Download (Folder Download)
+Install this script,
 
-> "Recursive Download" can only be used with ABDM and Aria2. "Recursive Download" is **still in the testing phase**.
+select files,
 
-**You need to properly configure the download folder for ABDM or Aria2 (absolute paths, such as `D:/Download`).**
+click Download button,
 
-If you did not set the download folder, files may be downloaded to unexpected locations (usually the root directory of your download manager's or your drive's), or refuse to download.
+Choose the way you prefer.
 
-![recursion](https://github.com/user-attachments/assets/3d1aaa20-d889-4070-8018-33e7129ba9a9)
+![usage](https://github.com/user-attachments/assets/36378f19-9966-414d-a344-82845a3087d0)
+
+
+## Download Methods
 
 ### Direct
 
-> Downloads files via direct links.
+> Download file using direct link.
 
-**Open Gofile Site Settings, grant the "Pop-ups and redirects" permission.**
+> [!NOTE]
+> Open Gofile Site Settings, grant the "Pop-ups and redirects" permission.
 
 Not recommended when there are too many files, as a large number of browser tabs will be opened at once.
 
-![permissions](https://github.com/user-attachments/assets/4676339f-f33f-46e1-92a0-08bb2d65a9c1)
+![direct](https://github.com/user-attachments/assets/4676339f-f33f-46e1-92a0-08bb2d65a9c1)
 
 ### ABDM
 
-> Sends download tasks directly to AB Download Manager.
+> Send files to AB Download Manager. **Folder download available.**
 
-**ABDM is REQUIRED and the browser integration must be enabled.**
+> [!NOTE]
+> Make sure to configure the ABDM port correctly. The default port is 15151.
 
-Make sure to configure the ABDM port correctly. The default port is 15151.
-
-![abdm](https://github.com/user-attachments/assets/bc181f0e-b287-4cc3-b81f-a52150d28985)
+![abdm](https://github.com/user-attachments/assets/71dabdaf-6bfb-4d59-bfb0-669b3893b43d)
 
 ### Aria2
 
-> Directly sends download tasks to the Aria2 downloader **via RPC**.
+> Send download tasks to Aria2 via RPC. **Folder download available.**
 
-**You need to properly configure the Aria2 RPC address and secret.**
+> [!NOTE]
+> You need to properly configure the Aria2 RPC address and secret.
 
 Note that the port used by third-party downloaders may differ from the default Aria2 configuration.
 For example, Motrix uses port 16800 by default.
 
 ### IDM
 
-> Batch download via Internet Download Manager.
+> Using Internet Download Manager.
 
-This exports an IDM-specific format, which is a file with the ".ef2" extension.
+This exports an IDM-specific format, which is a file with the ".ef2" file extension.
 
 In IDM, go to Tasks → Import → From "IDM export file" → Select the .ef2 file.
+
+## Folder Dwonload
+
+> "Folder Download" can only be used with ABDM and Aria2, and it is **still in the testing phase**.
+
+> [!NOTE]
+> You need to properly configure the download folder for ABDM or Aria2 (absolute paths, such as `D:/Download`).
+
+If you did not set the download folder, files may be downloaded to unexpected locations (usually the root directory of your download manager's or your drive's), or just refuse to download.
+
+![file list](https://github.com/user-attachments/assets/9a5e5dc1-c296-4bd3-9f7a-58494541cc7e)
