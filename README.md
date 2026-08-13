@@ -57,7 +57,7 @@ Not recommended when there are too many files, as a large number of browser tabs
 > You need to properly configure the Aria2 RPC address and secret.
 
 Note that the port used by third-party downloaders may differ from the default Aria2 configuration.
-For example, Motrix uses port 16800 by default.
+For example, [Motrix Next](https://github.com/AnInsomniacy/motrix-next) uses port `29100` by default.
 
 ### IDM
 
