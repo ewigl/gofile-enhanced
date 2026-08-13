@@ -1,13 +1,5 @@
 # ################################ Gofile
 
-# https://gofile.io/dist/js/filemanager.js
-
-# appdata: literally, app data
-
-# function createNotification(title, message, type = 'success', duration = 3000)
-# function createPopup({ title, content, icon = null, backgroundOpacity = true, showCloseButton = true })
-# function createAlert(type, content)
-
 # IDM EF2 File Formats, support CRLF(\r\n) only
 # <
 # url
@@ -30,7 +22,8 @@ Content-Type: application/json
       "cookie": "cookie"
     }
   },
-  "name": "file name"
+  "name": "file name",
+   "startDownload": true
 }
 
 # ################################ Aria2 RPC

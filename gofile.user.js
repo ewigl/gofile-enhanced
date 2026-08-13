@@ -2,32 +2,42 @@
 // @name               GoFile Enhanced
 // @name:zh-CN         GoFile 增强
 // @namespace          https://github.com/ewigl/gofile-enhanced
-// @version            0.8.6
-// @description        Directly batch-download GoFiles. Automatically bypass high traffic alert. Supports recursive folder download, Supports direct links. Built-in support for download managers like AB Download Manager, Aria2, and IDM.
-// @description:zh-CN  GoFile 文件批量下载。支持递归下载文件夹内容、直链下载。可以配合 AB Download Manager、Aria2、IDM 等下载器使用。
+// @version            0.9.0
+// @description        Batch-download GoFiles. Folder download. Automatically bypass high traffic alert. Use direct links. Built-in support for download managers like AB Download Manager, Aria2, and IDM.
+// @description:zh-CN  GoFile 文件批量下载。支持直链下载、下载文件夹内容、绕过流量警告。可以配合 AB Download Manager、Aria2、IDM 等下载器使用。
 // @author             Licht
 // @license            MIT
 // @homepage           https://github.com/ewigl/gofile-enhanced
 // @homepageURL        https://github.com/ewigl/gofile-enhanced
 // @match              http*://gofile.io/*
-// @icon               https://gofile.io/dist/img/favicon16.png
+// @icon               https://gofile.io/assets/img/favicon32.png
 // @connect            localhost
 // @connect            *
 // @grant              GM_getValue
 // @grant              GM_setValue
 // @grant              GM_xmlhttpRequest
+// @grant              unsafeWindow
 // ==/UserScript==
 
-; (function () {
+; (async function () {
     'use strict'
 
-    const SUPPORTED_DOWNLOADERS = ['Direct', 'ABDM', 'Aria2', 'IDM']
+    // import modules from gofile.io
+    const contentsModule = await import('/js/services/contents.js');
+    const menuModule = await import('/js/ui/menu.js');
+    const popupModule = await import('/js/ui/popup.js');
+    const toastModule = await import('/js/ui/toast.js');
+
+    const contents = contentsModule;
+    const { openMenu } = menuModule;
+    const { popup } = popupModule
+    const { toast } = toastModule;
 
     const DEFAULT_LANGUAGE = 'en-US'
     const CRLF = '\r\n'
 
-    const GE_CONTAINER_ID = 'GofileEnhanced_Container'
-    const GE_GORM_ID_PREFIX = 'GofileEnhanced_Form'
+    const GE_CONTAINER_ID = 'ge-container-bar'
+    const GE_FORM_ID_PREFIX = 'GofileEnhanced_Form'
 
     const I18N = {
         'zh-CN': {
@@ -39,7 +49,6 @@
             abdm_port_not_configured: 'ABDM 端口未配置',
             abdm_port_placeholder: '默认为 15151',
             abdm_settings: ' AB Download Manager 设置',
-            are_you_sure_to_download__these_files: '确定要下载下列文件吗？',
             aria2_connected: 'Aria2 连接成功',
             aria2_connection_fail: 'Aria2 连接失败',
             aria2_rpc_address: 'Aria2 RPC 地址',
@@ -52,35 +61,25 @@
             cancel: '取消',
             config: '配置',
             confirm: '确定',
-            download_all: '下载全部',
+            download: "下载",
             download_selected: '下载选中',
-            empty_folder: '文件夹为空',
-            empty_folder_description: '当前文件夹内容为空',
             error: '错误',
-            export_all: '导出全部',
-            export_selected: '导出选中',
             failed_to_fetch_folder_content: '获取文件夹内容失败',
             failed_to_send_to_abdm: '未成功发送至 ABDM',
             failed_to_send_to_aria2: '未成功发送至 Aria2',
             fetching_file_list: '正在获取文件列表',
-            loading: '加载中...',
-            loading_file_list: '正在加载文件列表',
-            loading_please_wait: '正在加载，请稍候',
-            no_file_selected: '未选择文件',
-            no_file_selected_description: '请至少选择一个文件',
-            please_make_sure_you_have_configured_download_folder: '请确保已正确配置下载目录。',
-            recursive_download: '递归下载',
-            reset_aria2: '重置 Aria2',
-            send_all: '发送全部',
-            send_selected: '发送选中',
+            file_list: "文件列表",
+            folder_download: "文件夹下载",
+            no_item_selected: '未选择文件',
+            please_make_sure_you_have_configured_download_folder: '下载前请确保已正确配置下载目录。',
+            reference: "参考",
+            reset_aria2: '默认设置',
             success: '成功',
             successfully_fetched_file_list: '成功获取文件列表',
             successfully_reset: '已重置',
             successfully_sent_to_abdm: '已成功发送至 ABDM',
             successfully_sent_to_aria2: '已成功发送至 Aria2',
-            test_abdm: '测试 ABDM',
-            test_aria2: '测试 Aria2',
-            unknown_error: '未知错误',
+            test_connection: "测试连接",
             unsupported_format: '不支持的格式',
             request_aborted: '请求中断',
             request_timed_out: '请求超时',
@@ -94,7 +93,6 @@
             abdm_port_not_configured: 'ABDM port not configured',
             abdm_port_placeholder: 'Default is 15151',
             abdm_settings: 'AB Download Manager Settings',
-            are_you_sure_to_download__these_files: 'Are you sure you want to download the following files?',
             aria2_connected: 'Aria2 connected successfully',
             aria2_connection_fail: 'Aria2 connection failed',
             aria2_rpc_address: 'Aria2 RPC Address',
@@ -107,35 +105,25 @@
             cancel: 'Cancel',
             config: 'Config',
             confirm: 'Confirm',
-            download_all: 'Download All',
+            download: "Download",
             download_selected: 'Download Selected',
-            empty_folder: 'Empty Folder',
-            empty_folder_description: 'The current folder is empty',
             error: 'Error',
-            export_all: 'Export All',
-            export_selected: 'Export Selected',
             failed_to_fetch_folder_content: 'Failed to fetch folder content',
             failed_to_send_to_abdm: 'Failed to send to ABDM',
             failed_to_send_to_aria2: 'Failed to send to Aria2',
             fetching_file_list: 'Fetching file list',
-            loading: 'Loading...',
-            loading_file_list: 'Loading file list',
-            loading_please_wait: 'Loading, please wait',
-            no_file_selected: 'No File Selected',
-            no_file_selected_description: 'Please select at least one file',
-            please_make_sure_you_have_configured_download_folder: 'Please make sure you have configured the download folder.',
-            reset_aria2: 'Reset Aria2',
-            recursive_download: 'Recursive Download',
-            send_all: 'Send All',
-            send_selected: 'Send Selected',
+            file_list: "File List",
+            folder_download: "Folder Download",
+            no_item_selected: 'No item selected',
+            please_make_sure_you_have_configured_download_folder: 'Before downloading, make sure you have configured the download folder correctly.',
+            reference: "Reference",
+            reset_aria2: 'Default Settings',
             success: 'Success',
             successfully_fetched_file_list: 'Successfully fetched file list',
             successfully_reset: 'successfully reset',
             successfully_sent_to_abdm: 'successfully sent to ABDM',
             successfully_sent_to_aria2: 'successfully sent to Aria2',
-            test_abdm: 'Test ABDM',
-            test_aria2: 'Test Aria2',
-            unknown_error: 'Unknown Error',
+            test_connection: "Test Connection",
             unsupported_format: 'Unsupported Format',
             request_aborted: 'Request Aborted',
             request_timed_out: 'Request Timed Out',
@@ -143,75 +131,50 @@
     }
 
     const ICONS = {
-        circle_down_s: 'fas fa-circle-down',
-        circle_down_r: 'far fa-circle-down',
-        circle_nodes_s: 'fas fa-circle-nodes',
-        copy_s: 'fas fa-copy',
-        copy_r: 'far fa-copy',
-        file_s: 'fas fa-file',
-        file_r: 'far fa-file',
-        file_ziper_s: 'fas fa-file-zipper',
-        file_ziper_r: 'far fa-file-zipper',
-        folder_s: 'fas fa-folder',
-        folder_r: 'far fa-folder',
-        gear_s: 'fas fa-gear',
-        google_plus: 'fa-brands fa-google-plus',
-        key_s: 'fas fa-key',
-        link_s: 'fas fa-link',
-        plane_s: 'fas fa-paper-plane',
-        plane_r: 'far fa-paper-plane',
-        plug_s: 'fas fa-plug',
-        rotate_left_s: 'fas fa-rotate-left',
+        logo: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles-icon lucide-sparkles size-5"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/></svg>',
+        downloadSelected: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-to-line-icon lucide-arrow-down-to-line size-5"><path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/></svg>',
+        settings: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bolt-icon lucide-bolt size-5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><circle cx="12" cy="12" r="4"/></svg>',
     }
 
     const GE_CONFIG = {
         ABDM: {
-            name: 'ABDM',
             id: 'ABDM',
-            desc: 'AB Download Manager',
             homepage: 'https://github.com/amir1376/ab-download-manager',
             settings: {
                 abdmPort: {
                     key: 'abdm_port',
                     defaultValue: '15151',
                     i18nKey: 'abdm_port',
-                    icon: ICONS.plug_s,
                     placeholderI18nKey: 'abdm_port_placeholder',
                 },
                 abdmDownloadFolder: {
                     key: 'abdm_download_folder',
                     defaultValue: '',
                     i18nKey: 'abdm_download_folder',
-                    icon: ICONS.folder_s,
                     placeholderI18nKey: 'abdm_download_folder_placeholder',
                 },
             },
         },
         Aria2: {
-            name: 'Aria2',
             id: 'Aria2',
-            desc: 'Aria2 RPC Interface',
             homepage: 'https://aria2.github.io/manual/en/html/aria2c.html#rpc-interface',
             settings: {
                 rpcAddress: {
                     key: 'aria2_rpc_address',
                     defaultValue: 'http://localhost:6800/jsonrpc',
                     i18nKey: 'aria2_rpc_address',
-                    icon: ICONS.link_s,
                     placeholderI18nKey: 'aria2_rpc_address_placeholder',
                 },
                 rpcSecret: {
                     key: 'aria2_rpc_secret',
                     defaultValue: '',
                     i18nKey: 'aria2_rpc_secret',
-                    icon: ICONS.key_s,
                     placeholderI18nKey: 'aria2_rpc_secret_placeholder',
                 },
                 rpcDir: {
                     key: 'aria2_rpc_dir',
                     defaultValue: '',
                     i18nKey: 'aria2_rpc_dir',
-                    icon: ICONS.folder_s,
                     placeholderI18nKey: 'aria2_rpc_dir_placeholder',
                 },
             },
@@ -236,11 +199,11 @@
                             ok: response.status >= 200 && response.status < 300,
                             status: response.status,
                             statusText: response.statusText,
-                            url: response.finalUrl,
-                            text: () => Promise.resolve(response.responseText),
                             json: () => Promise.resolve(JSON.parse(response.responseText)),
-                            xml: () => Promise.resolve(response.responseXML),
-                            raw: response,
+                            // text: () => Promise.resolve(response.responseText),
+                            // xml: () => Promise.resolve(response.responseXML),
+                            // url: response.finalUrl,
+                            // raw: response,
                         })
                     },
                     onerror: (err) => reject(err),
@@ -264,19 +227,25 @@
                 return acc
             }, {})
         },
-        resetAllSettings(category) {
+        saveForm(category, form) {
+            Object.entries(GE_CONFIG[category].settings).forEach(([settingKey, setting]) => {
+                utils.setSettings(category, settingKey, form.elements[setting.key].value)
+            })
+        },
+        resetForm(category, form) {
             const settings = GE_CONFIG[category].settings
+
             Object.keys(settings).forEach((key) => {
                 const setting = settings[key]
-                utils.setValue(setting.key, setting.defaultValue)
-                createNotification(utils.getTranslation('success'), `${utils.getTranslation(setting.i18nKey)} ${utils.getTranslation('successfully_reset')}`)
+
+                if (form?.elements[setting.key]) {
+                    form.elements[setting.key].value = setting.defaultValue
+                }
             })
         },
         initSettings() {
-            Object.keys(GE_CONFIG).forEach((category) => {
-                const settings = GE_CONFIG[category].settings
-                Object.keys(settings).forEach((key) => {
-                    const setting = settings[key]
+            Object.values(GE_CONFIG).forEach(({ settings }) => {
+                Object.values(settings).forEach((setting) => {
                     if (utils.getValue(setting.key) === undefined) {
                         utils.setValue(setting.key, setting.defaultValue)
                     }
@@ -288,112 +257,172 @@
             return I18N[lang][key] || key
         },
         getToken: () => document.cookie,
+        maskFolderPath(path) {
+            if (!path || typeof path !== 'string') {
+                return path || ''
+            }
+
+            const segments = path.split('/')
+            const maskedSegments = segments.map((segment) => {
+                if (!segment || segment.length < 15) {
+                    return segment
+                }
+
+                const head = segment.slice(0, 5)
+                const tail = segment.slice(-5)
+                return `${head}***${tail}`
+            })
+
+            return maskedSegments.join('/')
+        },
         goDirectLinks(links) {
             links.forEach((link) => {
                 window.open(link, link)
             })
         },
-        async collectAllItems() {
-            createAlert('loading', utils.getTranslation('fetching_file_list'))
+        async collectAllItems(selectedKeys = []) {
+            const busy = toast.busy({
+                title: utils.getTranslation('fetching_file_list')
+            });
 
-            const mainContentData = appdata.fileManager.mainContent.data
-            const tbdItems = []
+            const mainContentData = GE_FileManager.state.folder;
+            const tbdItems = [];
+            const selectedSet = new Set(selectedKeys);
 
-            const collectItems = async (contentData, parentPath = '') => {
-                if (contentData.childrenCount > 0) {
-                    for (const key of Object.keys(contentData.children)) {
-                        const childItem = contentData.children[key]
+            let didTraverseFolder = false;
 
-                        const currentPath = `${parentPath}/${contentData.name}`
+            const collectItems = async (
+                contentData,
+                parentPath = '',
+                inheritedSelected = false
+            ) => {
+                if (contentData.childrenCount <= 0) {
+                    return;
+                }
 
-                        if (childItem.type === 'file') {
-                            tbdItems.push({ ...childItem, downloadFolder: currentPath })
-                        } else if (childItem.type === 'folder') {
-                            if (childItem.childrenCount === 0) {
-                                continue
+                const currentPath = `${parentPath}/${contentData.name}`;
+
+                for (const key of Object.keys(contentData.children || {})) {
+                    const childItem = contentData.children[key];
+
+                    const directlySelected = selectedSet.has(childItem.id);
+
+                    const isSelected =
+                        inheritedSelected ||
+                        directlySelected;
+
+                    if (childItem.type === 'file') {
+                        if (isSelected) {
+                            tbdItems.push({
+                                ...childItem,
+                                downloadFolder: currentPath
+                            });
+                        }
+
+                        continue;
+                    }
+
+                    if (childItem.type === 'folder') {
+                        if (!isSelected) {
+                            continue;
+                        }
+
+                        if (childItem.childrenCount === 0) {
+                            continue;
+                        }
+
+                        try {
+                            didTraverseFolder = true;
+
+                            const res = await contents.getFolder(
+                                GE_FileManager.state.account.token,
+                                childItem.id
+                            );
+
+                            if (res?.data) {
+                                await collectItems(
+                                    res.data,
+                                    currentPath,
+                                    true
+                                );
+                            } else {
+                                toast(
+                                    `${utils.getTranslation('failed_to_fetch_folder_content')} ${childItem.name}`,
+                                    {
+                                        type: 'error'
+                                    }
+                                );
                             }
-                            try {
-                                // API
-                                const res = await getContent(childItem.id)
-
-                                if (res.status === 'ok') {
-                                    const currentContentData = res.data
-                                    await collectItems(currentContentData, currentPath)
-                                } else {
-                                    createNotification(utils.getTranslation('error'), `${utils.getTranslation('failed_to_fetch_folder_content')} ${childItem.name}: ${data.message}`, 'error')
+                        } catch (error) {
+                            toast(
+                                `${utils.getTranslation('failed_to_fetch_folder_content')} ${childItem.name} ${error}`,
+                                {
+                                    type: 'error'
                                 }
-                            } catch (error) {
-                                createNotification(utils.getTranslation('error'), `${utils.getTranslation('failed_to_fetch_folder_content')} ${childItem.name}`, 'error')
-                            }
+                            );
                         }
                     }
                 }
+            };
+
+            await collectItems(mainContentData, '', false);
+
+            if (didTraverseFolder) {
+                busy.succeed({
+                    title: utils.getTranslation('successfully_fetched_file_list')
+                });
+            } else {
+                busy.dismiss();
             }
 
-            await collectItems(mainContentData)
-            closePopup()
-
-            return { items: tbdItems }
+            return {
+                items: tbdItems
+            };
         },
         recursiveDownload(tbdItems, callback) {
             const fileItems = tbdItems.map((item) => {
                 return {
                     name: item.name,
-                    path: item.downloadFolder || '',
+                    path: utils.maskFolderPath(item.downloadFolder || ''),
                 }
             })
-            const fileList = fileItems.map((file) => `<p>${file.path}/<span class="text-blue-500">${file.name}</span></p>`).sort()
+            const fileList = fileItems.map((file) => {
+                const pathWithBoldSeparators = file.path.replace(/\//g, '<span class="text-brand-300"> / </span>')
+                return `<p>${pathWithBoldSeparators}<span class="text-brand-300"> / </span><span class="text-brand-300">${file.name}</span></p>`
+            }).sort()
 
-            createPopup({
-                title: utils.getTranslation('successfully_fetched_file_list'),
+            popup.open({
+                title: utils.getTranslation('file_list'),
+                size: "2xl",
                 content: `
-                    <div class="space-y-4">
-                        <div class="bg-blue-900 bg-opacity-20 border border-blue-800 rounded-lg p-4">
-                            <div class="flex items-center space-x-3">
-                                <i class="fas fa-info-circle text-blue-400 text-xl"></i>
-                                <p class="text-gray-300 text-sm">
-                                    <span>${utils.getTranslation('are_you_sure_to_download__these_files')}</span>
-                                    <span>${utils.getTranslation('please_make_sure_you_have_configured_download_folder')}</span>
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <form id="${GE_GORM_ID_PREFIX}_FILE_LIST" class="space-y-4">
-                        
-                            ${fileList.join('')}
-
-                            <button
-                                type="submit"
-                                class="w-full py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-300
-                                    ease-in-out text-center text-white font-semibold flex items-center justify-center space-x-2"
-                            >
-                                <i class="fas fa-check"></i>
-                                <span> ${utils.getTranslation('confirm')} </span>
-                            </button>
-                        </form>
+                <div class="mb-3 flex items-start gap-2.5 rounded-xl border p-3.5 border-amber-500/20 bg-amber-500/10">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="triangle-alert" class="lucide lucide-triangle-alert mt-0.5 size-4 shrink-0 text-amber-400" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+                    <div class="text-sm leading-relaxed text-slate-300">
+                        ${utils.getTranslation("please_make_sure_you_have_configured_download_folder")}
                     </div>
-                `,
-                icon: ICONS.copy_s,
-            })
-
-            const form = document.forms[`${GE_GORM_ID_PREFIX}_FILE_LIST`]
-
-            if (form) {
-                form.addEventListener('submit', (event) => {
-                    event.preventDefault()
-
-                    callback()
-
-                    closePopup()
-                })
-            }
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="text-sm leading-relaxed text-slate-300">
+                        ${fileList.join('')}
+                    </div>
+                </div>`,
+                actions: [
+                    { label: utils.getTranslation('cancel'), variant: 'ghost' },
+                    {
+                        label: utils.getTranslation('download'), variant: 'primary',
+                        onClick: (h) => { h.close(); callback(); }
+                    },
+                ],
+            });
         },
         sendToABDM(tbdItems) {
             const { abdmPort, abdmDownloadFolder } = utils.getAllSettings('ABDM')
             const cookie = utils.getToken()
 
             if (!abdmPort) {
-                return createNotification(utils.getTranslation('error'), utils.getTranslation('abdm_port_not_configured'), 'error')
+                return toast(utils.getTranslation('abdm_port_not_configured'), {
+                    type: 'error',
+                })
             }
 
             const postDatas = tbdItems.map((item) => {
@@ -406,10 +435,10 @@
                     },
                     name: item.name,
                     folder: item.downloadFolder || (abdmDownloadFolder === '' ? '/' : abdmDownloadFolder),
+                    // Automaticaly start download
+                    startDownload: true
                 }
             })
-
-            // console.log('[GoFile Enhanced] Sending to ABDM:', postDatas)
 
             postDatas.forEach(async (data) => {
                 try {
@@ -418,37 +447,57 @@
                         body: JSON.stringify(data),
                     })
                     if (res.ok) {
-                        createNotification(utils.getTranslation('success'), `${data.name} ${utils.getTranslation('successfully_sent_to_abdm')}`, 'success')
+                        toast(`${data.name} ${utils.getTranslation('successfully_sent_to_abdm')}`, {
+                            type: 'success',
+                        })
                     } else {
-                        createNotification(utils.getTranslation('error'), `${data.name} ${utils.getTranslation('failed_to_send_to_abdm')} / ${res.status} - ${res.statusText}`, 'error')
+                        toast(`${data.name} ${utils.getTranslation('failed_to_send_to_abdm')} / ${res.status} - ${res.statusText}`, {
+                            type: 'error',
+                        })
                         console.error('[GoFile Enhanced] Error sending to ABDM:', res)
                     }
                 } catch (error) {
-                    createNotification(utils.getTranslation('error'), `${data.name}  ${utils.getTranslation('failed_to_send_to_abdm')}`, 'error')
+                    toast(`${data.name} ${utils.getTranslation('failed_to_send_to_abdm')}`, {
+                        type: 'error',
+                    })
                     console.error('[GoFile Enhanced] Error sending to ABDM:', error)
                 }
             })
         },
-        async testABDMConnection() {
-            const port = utils.getSettings('ABDM', 'abdmPort')
+        async testABDMConnection(form) {
+            const port = form.elements.abdm_port.value
 
             if (port) {
                 try {
-                    const res = await utils.gmFetch(`http://localhost:${port}/ping`)
+                    const res = await utils.gmFetch(
+                        `http://localhost:${port}/ping`,
+                        { method: "POST" }
+                    )
                     if (res.ok) {
-                        createNotification(utils.getTranslation('success'), utils.getTranslation('abdm_connected'), 'success')
+                        toast(utils.getTranslation('abdm_connected'), {
+                            type: 'success',
+                        })
                     } else {
-                        createNotification(utils.getTranslation('error'), `${utils.getTranslation('abdm_connection_fail')} / ${res.status} - ${res.statusText}`, 'error')
+                        toast(`${utils.getTranslation('abdm_connection_fail')} / ${res.status} - ${res.statusText}`, {
+                            type: 'error',
+                        })
                     }
-                } catch (e) {
-                    createNotification(utils.getTranslation('error'), utils.getTranslation('abdm_connection_fail'), 'error')
+                } catch (_error) {
+                    toast(utils.getTranslation('abdm_connection_fail'), {
+                        type: 'error',
+                    })
                 }
             } else {
-                createNotification(utils.getTranslation('error'), utils.getTranslation('abdm_not_configured'), 'error')
+                toast(utils.getTranslation('abdm_port_not_configured'), {
+                    type: 'error',
+                })
             }
         },
-        async testAria2Connection() {
-            const { rpcAddress, rpcSecret } = utils.getAllSettings('Aria2')
+        async testAria2Connection(form) {
+            // const busy = toast.busy({ title: utils.getTranslation('loading') });
+
+            const rpcAddress = form.elements.aria2_rpc_address.value
+            const rpcSecret = form.elements.aria2_rpc_secret.value
 
             try {
                 const res = await utils.gmFetch(rpcAddress, {
@@ -462,13 +511,21 @@
                 })
 
                 if (res.ok) {
-                    createNotification(utils.getTranslation('success'), utils.getTranslation('aria2_connected'), 'success')
+                    toast(utils.getTranslation('aria2_connected'), {
+                        type: 'success',
+                    })
                 } else {
-                    createNotification(utils.getTranslation('error'), `${utils.getTranslation('aria2_connection_fail')} / ${res.status} - ${res.statusText}`, 'error')
+                    toast(`${utils.getTranslation('aria2_connection_fail')} / ${res.status} - ${res.statusText}`, {
+                        type: 'error',
+                    })
                 }
-            } catch (e) {
-                createNotification(utils.getTranslation('error'), utils.getTranslation('aria2_connection_fail'), 'error')
+            } catch (_error) {
+                toast(utils.getTranslation('aria2_connection_fail'), {
+                    type: 'error',
+                })
             }
+
+            // busy.dismiss();
         },
         async sendToAria2(tbdItems) {
             const { rpcAddress, rpcSecret, rpcDir } = utils.getAllSettings('Aria2')
@@ -504,16 +561,24 @@
 
                     responseArray.forEach((item) => {
                         if (item.error) {
-                            createNotification(utils.getTranslation('error'), `${utils.getTranslation('failed_to_send_to_aria2')} / ${item.error.code} - ${item.error.message}`, 'error')
+                            toast(`${utils.getTranslation('failed_to_send_to_aria2')} / ${item.error.code} - ${item.error.message}`, {
+                                type: 'error',
+                            })
                         } else {
-                            createNotification(utils.getTranslation('success'), `${utils.getTranslation('successfully_sent_to_aria2')} / ID: ${item.result}`)
+                            toast(`${utils.getTranslation('successfully_sent_to_aria2')} / ID: ${item.result}`, {
+                                type: 'success',
+                            })
                         }
                     })
                 } else {
-                    createNotification(utils.getTranslation('error'), `${utils.getTranslation('failed_to_send_to_aria2')} /  ${res.status} - ${res.statusText}`, 'error')
+                    toast(`${utils.getTranslation('failed_to_send_to_aria2')} /  ${res.status} - ${res.statusText}`, {
+                        type: 'error',
+                    })
                 }
-            } catch (e) {
-                createNotification(utils.getTranslation('error'), utils.getTranslation('failed_to_send_to_aria2'), 'error')
+            } catch (_error) {
+                toast(utils.getTranslation('failed_to_send_to_aria2'), {
+                    type: 'error',
+                })
             }
         },
         exportToIDM(tbdItems) {
@@ -531,28 +596,17 @@
             const url = URL.createObjectURL(blob)
             const link = document.createElement('a')
             link.href = url
-            link.download = `${appdata.fileManager.mainContent.data.name}.${fileExtension}`
+            link.download = `${GE_FileManager.state.folder.name}.${fileExtension}`
             link.click()
             URL.revokeObjectURL(url)
         },
-        getHrLine() {
-            const hrLine = document.createElement('li')
-            hrLine.classList.add('border-b', 'border-gray-700')
-            return hrLine
-        },
-        getButtonTemplate(icon, text) {
-            return `
-            <a href="javascript:void(0)" class="hover:text-blue-500 flex items-center gap-2" aria-label="${text}">
-                <i class="${icon}"></i>
-                ${text}
-            </a>
-            `
-        },
-        createButton(options = {}) {
-            const { icon, text, onClick } = options
-
-            const button = document.createElement('li')
-            button.innerHTML = utils.getButtonTemplate(icon, text)
+        getActionButton({ icon, label, onClick }) {
+            const button = document.createElement('button')
+            button.type = 'button'
+            button.className = 'icon-btn'
+            button.title = label
+            button.setAttribute('aria-label', label)
+            button.innerHTML = icon
 
             if (onClick) {
                 button.addEventListener('click', onClick)
@@ -560,211 +614,198 @@
 
             return button
         },
-        getRegularButtons(format) {
-            // Header
-            const formatTitleElement = document.createElement('li')
-            formatTitleElement.innerHTML = `
-            <span class="flex items-center gap-2 text-blue-500 font-bold">
-                <i class="${ICONS.google_plus}"></i>
-                ${format}
-            </span>
-            `
+        openActionMenu(anchor, items) {
+            openMenu({
+                anchor,
+                placement: 'bottom-end',
+                items: () => items,
+            })
+        },
+        getDownloadSelectedButton() {
+            const button = utils.getActionButton({
+                icon: ICONS.downloadSelected,
+                label: utils.getTranslation('download_selected'),
+                onClick: (event) => {
+                    utils.openActionMenu(event.currentTarget, [
+                        { type: 'label', label: utils.getTranslation('download_selected') },
+                        ...['Direct', 'ABDM', 'Aria2', 'IDM'].map((format) => ({
+                            label: format,
+                            onClick: () => operations.handleExport({
+                                format,
+                                recursive: format === 'ABDM' || format === 'Aria2',
+                            }),
+                            icon: format === "ABDM" || format === "Aria2" ? "folder-tree" : '',
+                            hint: format === "ABDM" || format === "Aria2" ? utils.getTranslation("folder_download") : '',
+                        })),
+                    ])
+                },
+            })
 
-            let exportAllText, exportSelectedText, exportAllIcon, exportSelectedIcon
-
-            switch (format) {
-                case 'ABDM':
-                case 'Aria2':
-                    exportAllText = utils.getTranslation('send_all')
-                    exportAllIcon = ICONS.plane_s
-                    exportSelectedText = utils.getTranslation('send_selected')
-                    exportSelectedIcon = ICONS.plane_r
-                    break
-                case 'IDM':
-                    exportAllText = utils.getTranslation('export_all')
-                    exportAllIcon = ICONS.file_s
-                    exportSelectedText = utils.getTranslation('export_selected')
-                    exportSelectedIcon = ICONS.file_r
-                    break
-                default:
-                    exportAllText = utils.getTranslation('download_all')
-                    exportAllIcon = ICONS.circle_down_s
-                    exportSelectedText = utils.getTranslation('download_selected')
-                    exportSelectedIcon = ICONS.circle_down_r
-                    break
+            const updateButtonVisibility = () => {
+                const hasSelection = !!GE_FileManager?.state?.selection && GE_FileManager.state.selection.size > 0
+                button.classList.toggle('hidden', !hasSelection)
             }
 
-            const exportAllButton = utils.createButton({
-                text: exportAllText,
-                icon: exportAllIcon,
-                onClick: operations.handleExport.bind(null, {
-                    selectMode: false,
-                    format,
-                }),
+            updateButtonVisibility()
+
+            const observer = new MutationObserver(() => {
+                updateButtonVisibility()
             })
 
-            const exportSelectedButton = utils.createButton({
-                text: exportSelectedText,
-                icon: exportSelectedIcon,
-                onClick: operations.handleExport.bind(null, {
-                    selectMode: true,
-                    format,
-                }),
-            })
-
-            return [formatTitleElement, exportAllButton, exportSelectedButton]
-        },
-        getSpecialButtons(downloader) {
-            const additionalButtons = []
-
-            const settingsPanleTitle = utils.getTranslation(`${downloader.toLowerCase()}_settings`)
-            const settingsButton = utils.createButton({
-                icon: ICONS.gear_s,
-                text: `${utils.getTranslation('config')} ${downloader}`,
-                onClick: () => {
-                    createPopup({
-                        title: settingsPanleTitle,
-                        content: utils.getConfigPanel(downloader),
-                        icon: ICONS.gear_s,
-                    })
-
-                    const form = document.forms[`${GE_GORM_ID_PREFIX}_${downloader}`]
-
-                    if (form) {
-                        form.addEventListener('submit', (event) => {
-                            event.preventDefault()
-
-                            Object.entries(GE_CONFIG[downloader].settings).forEach(([settingKey, _value]) => {
-                                utils.setSettings(downloader, settingKey, form.elements[_value.key].value)
-                            })
-
-                            closePopup()
-                        })
-                    }
-                },
-            })
-
-            const abdmRecursiveDownloadButton = utils.createButton({
-                text: utils.getTranslation('recursive_download'),
-                icon: ICONS.copy_s,
-                onClick: operations.handleExport.bind(null, {
-                    enableRecursion: true,
-                    format: 'ABDM',
-                }),
-            })
-
-            const testABDMButton = utils.createButton({
-                icon: ICONS.circle_nodes_s,
-                text: utils.getTranslation('test_abdm'),
-                onClick: () => {
-                    utils.testABDMConnection()
-                },
-            })
-
-            const aria2RecursiveDownloadButton = utils.createButton({
-                text: utils.getTranslation('recursive_download'),
-                icon: ICONS.copy_s,
-                onClick: operations.handleExport.bind(null, {
-                    enableRecursion: true,
-                    format: 'Aria2',
-                }),
-            })
-
-            const testAria2Button = utils.createButton({
-                icon: ICONS.circle_nodes_s,
-                text: utils.getTranslation('test_aria2'),
-                onClick: () => {
-                    utils.testAria2Connection()
-                },
-            })
-
-            const rpcResetButton = utils.createButton({
-                icon: ICONS.rotate_left_s,
-                text: utils.getTranslation('reset_aria2'),
-                onClick: () => {
-                    utils.resetAllSettings('Aria2')
-                },
-            })
-
-            switch (downloader) {
-                case 'ABDM':
-                    additionalButtons.push(abdmRecursiveDownloadButton)
-                    additionalButtons.push(settingsButton)
-                    additionalButtons.push(testABDMButton)
-                    break
-                case 'Aria2':
-                    additionalButtons.push(aria2RecursiveDownloadButton)
-                    additionalButtons.push(settingsButton)
-                    additionalButtons.push(testAria2Button)
-                    additionalButtons.push(rpcResetButton)
-                    break
-                default:
-                    break
+            if (document.documentElement) {
+                observer.observe(document.documentElement, {
+                    childList: true,
+                    subtree: true
+                })
             }
 
-            return additionalButtons
+            return button
         },
-        getButtonsByDownloader(downloader) {
-            const regularButtons = utils.getRegularButtons(downloader)
+        getSettingsButton() {
+            return utils.getActionButton({
+                icon: ICONS.settings,
+                label: `${utils.getTranslation('config')}`,
+                onClick: (event) => {
+                    utils.openActionMenu(event.currentTarget, [
+                        { type: 'label', label: utils.getTranslation('config') },
+                        ...['ABDM', 'Aria2'].map((downloader) => ({
+                            label: downloader,
+                            onClick: () => {
 
-            const additionalButtons = utils.getSpecialButtons(downloader)
+                                popup.open({
+                                    title: utils.getTranslation(`${downloader.toLowerCase()}_settings`),
+                                    size: "2xl",
+                                    content: utils.getConfigPanel(downloader),
+                                    actions: [
+                                        { label: utils.getTranslation('cancel'), variant: 'ghost' },
+                                        {
+                                            label: utils.getTranslation('confirm'), variant: 'primary',
+                                            onClick: (h) => {
+                                                const form = document.forms[`${GE_FORM_ID_PREFIX}_${downloader}`]
 
-            return [utils.getHrLine(), ...regularButtons, ...additionalButtons]
+                                                utils.saveForm(downloader, form)
+
+                                                h.close()
+                                            }
+                                        },
+                                    ],
+                                });
+
+                                const testButton = document.querySelector(`[data-ge-panel-action="${downloader}-test"]`)
+                                const resetButton = document.querySelector(`[data-ge-panel-action="${downloader}-reset"]`)
+
+                                if (testButton) {
+                                    testButton.addEventListener('click', () => {
+                                        const form = document.forms[`${GE_FORM_ID_PREFIX}_${downloader}`]
+
+                                        if (downloader === 'ABDM') {
+                                            utils.testABDMConnection(form)
+                                        } else {
+                                            utils.testAria2Connection(form)
+                                        }
+                                    })
+                                }
+
+                                if (resetButton) {
+                                    resetButton.addEventListener('click', () => {
+                                        const form = document.forms[`${GE_FORM_ID_PREFIX}_${downloader}`]
+
+                                        if (downloader === 'Aria2') {
+                                            utils.resetForm('Aria2', form)
+                                        }
+                                    })
+                                }
+
+                            },
+                        })),
+                    ])
+                },
+            })
+        },
+        getActionButtons() {
+            const ge_logo = document.createElement("a")
+            ge_logo.className = 'icon-btn'
+            ge_logo.href = "https://github.com/ewigl/gofile-enhanced"
+            ge_logo.target = "_blank"
+            ge_logo.innerHTML = ICONS.logo
+
+            const ge_title = document.createElement('span')
+            ge_title.className = 'text-slate-400 flex items-center gap-1.5'
+            ge_title.innerHTML = `GoFile Enhanced`
+
+            const spacer = document.createElement('span');
+            spacer.className = 'flex-1';
+
+            return [
+                ge_logo,
+                ge_title,
+                spacer,
+                utils.getDownloadSelectedButton(),
+                utils.getSettingsButton(),
+            ]
         },
         getFormInputItemTemplate(setting) {
-            const { key, i18nKey, icon, placeholderI18nKey } = setting
+            const { key, i18nKey, placeholderI18nKey } = setting
 
             return `
-            <div class="space-y-2">
-                <label for="${key}" class="block text-sm font-medium text-gray-300">
-                    ${utils.getTranslation(i18nKey)}
-                </label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="${icon} text-gray-400"></i>
-                    </div>
-                    <input 
-                        type="text" 
-                        id="${key}" 
-                        key="${key}" 
-                        class="w-full pl-10 pr-3 py-2 bg-gray-700 rounded-lg border border-gray-600 focus:ring-2
-                            focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition duration-200 text-white placeholder-gray-400"
+                <div>
+                    <label for="${key}" class="mb-1.5 block text-xs font-medium text-slate-400">
+                        ${utils.getTranslation(i18nKey)}
+                    </label>
+                    <input
+                        id="${key}"
+                        name="${key}"
                         value="${utils.getValue(key)}"
-                        title="${utils.getTranslation(placeholderI18nKey)}"
+                        class="input"
+                        type="text"
+                        maxlength="200"
+                        placeholder="${utils.getTranslation(placeholderI18nKey)}"
+                        autocomplete="off"
                     >
                 </div>
-            </div>
             `
         },
         getConfigPanel(category) {
             const config = GE_CONFIG[category]
+            const extraActions = category === 'ABDM'
+                ? `
+                    <div class="flex gap-2">
+                        <button type="button" data-ge-panel-action="${category}-test" class="btn-secondary flex-1 py-2 px-3 rounded-lg border border-blue-500 text-blue-400 hover:bg-blue-500/10 transition">
+                            ${utils.getTranslation('test_connection')}
+                        </button>
+                    </div>
+                `
+                : `
+                    <div class="flex gap-2">
+                        <button type="button" data-ge-panel-action="${category}-test" class="btn-secondary flex-1 py-2 px-3 rounded-lg border border-blue-500 text-blue-400 hover:bg-blue-500/10 transition">
+                            ${utils.getTranslation('test_connection')}
+                        </button>
+                        <button type="button" data-ge-panel-action="${category}-reset" class="btn-secondary flex-1 py-2 px-3 rounded-lg border border-blue-500 text-amber-400 hover:bg-blue-500/10 transition">
+                            ${utils.getTranslation('reset_aria2')}
+                        </button>
+                    </div>
+                `
 
             return `
                 <div class="space-y-4">
-                    <div class="bg-blue-900 bg-opacity-20 border border-blue-800 rounded-lg p-4">
-                        <div class="flex items-center space-x-3">
-                            <i class="fas fa-info-circle text-blue-400 text-xl"></i>
-                            <p class="text-gray-300 text-sm">
-                                <a href="${config.homepage}" target="_blank" rel="noopener noreferrer"> ${config.homepage} </a>
-                            </p>
+                    <div class="flex items-start gap-2.5 rounded-xl border p-3.5 border-sky-500/20 bg-sky-500/10">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="info" class="lucide lucide-info mt-0.5 size-4 shrink-0 text-sky-400" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                        <div class="text-sm leading-relaxed text-slate-300">
+                            ${utils.getTranslation("reference")}: 
+                            <a
+                                href="${config.homepage}" 
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="font-medium text-brand-400 underline decoration-brand-400/40 underline-offset-2 transition-colors hover:text-brand-300 hover:decoration-brand-300"
+                            >
+                                ${config.homepage}
+                            </a>
                         </div>
                     </div>
 
-                    <form id="${GE_GORM_ID_PREFIX}_${config.id}" class="space-y-4">
-
-                    ${Object.entries(config.settings)
-                    .map(([_key, setting]) => utils.getFormInputItemTemplate(setting))
-                    .join('')}
-
-                        <button
-                            id="GofileEnhanced_${config.id}_Submit"
-                            type="submit"
-                            class="w-full py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-300
-                                ease-in-out text-center text-white font-semibold flex items-center justify-center space-x-2"
-                        >
-                            <i class="fas fa-check"></i>
-                            <span> ${utils.getTranslation('confirm')} </span>
-                        </button>
+                    <form id="${GE_FORM_ID_PREFIX}_${config.id}" class="space-y-4">
+                        ${Object.entries(config.settings).map(([_key, setting]) => utils.getFormInputItemTemplate(setting)).join('')}
+                        ${extraActions}
                     </form>
                 </div>
             `
@@ -773,33 +814,37 @@
 
     const operations = {
         async handleExport(options) {
-            const { selectMode, format, enableRecursion } = options
+            const { format, recursive } = options
             const abdmDownloadFolder = utils.getSettings('ABDM', 'abdmDownloadFolder')
             const aria2RpcDir = utils.getSettings('Aria2', 'rpcDir')
+            const selectedKeys = Array.from(GE_FileManager.state.selection || [])
+
+            if (recursive && selectedKeys.length === 0) {
+                return toast(utils.getTranslation('no_item_selected'), {
+                    type: 'warning',
+                })
+            }
+
+            const shouldShowFileList = selectedKeys.some((key) => {
+                const item = GE_FileManager.state.folder.children?.[key]
+                return item?.type === 'folder'
+            })
 
             let tbdItems = []
 
-            if (enableRecursion) {
-                const { items } = await utils.collectAllItems()
+            if (recursive) {
+                const { items } = await utils.collectAllItems(selectedKeys)
                 tbdItems = items
             } else {
-                const allFiles = appdata.fileManager.mainContent.data.children
-
-                const selectedKeys = appdata.fileManager.contentsSelected
-                // all file keys or selected file keys
-                const fileKeys = Object.keys(selectMode ? selectedKeys : allFiles)
-                // to be downloaded keys
-                const tbdKeys = fileKeys.filter((key) => allFiles[key].type === 'file')
-
+                const allFiles = GE_FileManager.state.folder.children
+                const tbdKeys = selectedKeys.filter((key) => allFiles[key].type === 'file')
                 tbdItems = tbdKeys.map((key) => allFiles[key])
             }
 
             if (tbdItems.length === 0) {
-                return createNotification(
-                    selectMode ? utils.getTranslation('no_file_selected') : utils.getTranslation('empty_folder'),
-                    selectMode ? utils.getTranslation('no_file_selected_description') : utils.getTranslation('empty_folder_description'),
-                    'warning',
-                )
+                return toast(utils.getTranslation('no_item_selected'), {
+                    type: "warning"
+                });
             }
 
             switch (format) {
@@ -807,83 +852,113 @@
                     utils.goDirectLinks(tbdItems.map((item) => item.link))
                     break
                 case 'ABDM':
-                    if (enableRecursion) {
-                        utils.recursiveDownload(tbdItems, () => {
-                            utils.sendToABDM(tbdItems.map((item) => ({ ...item, downloadFolder: abdmDownloadFolder + item.downloadFolder })))
-                        })
-                    } else {
-                        utils.sendToABDM(tbdItems)
+                    if (!shouldShowFileList) {
+                        utils.sendToABDM(
+                            tbdItems.map(
+                                (item) => ({ ...item, downloadFolder: abdmDownloadFolder + item.downloadFolder })
+                            )
+                        )
+                        break
                     }
+                    utils.recursiveDownload(
+                        tbdItems,
+                        () => utils.sendToABDM(
+                            tbdItems.map(
+                                (item) => ({ ...item, downloadFolder: abdmDownloadFolder + item.downloadFolder })
+                            )
+                        )
+                    )
                     break
                 case 'Aria2':
-                    if (enableRecursion) {
-                        utils.recursiveDownload(tbdItems, () => {
-                            utils.sendToAria2(tbdItems.map((item) => ({ ...item, downloadFolder: aria2RpcDir + item.downloadFolder })))
-                        })
-                    } else {
-                        utils.sendToAria2(tbdItems)
+                    if (!shouldShowFileList) {
+                        utils.sendToAria2(
+                            tbdItems.map(
+                                (item) => ({ ...item, downloadFolder: aria2RpcDir + item.downloadFolder }))
+                        )
+                        break
                     }
+                    utils.recursiveDownload(
+                        tbdItems,
+                        () => utils.sendToAria2(
+                            tbdItems.map(
+                                (item) => ({ ...item, downloadFolder: aria2RpcDir + item.downloadFolder }))
+                        )
+                    )
                     break
                 case 'IDM':
                     utils.exportToIDM(tbdItems)
                     break
                 default:
-                    createNotification(utils.getTranslation('error'), `${utils.getTranslation('unsupported_format')}`, 'error')
+                    toast(utils.getTranslation('unsupported_format'), {
+                        type: 'error',
+                    })
                     break
             }
         },
-        // add buttons to sidebar
-        addContainerToSidebar() {
-            // create container
-            const container = document.createElement('ul')
-            container.id = GE_CONTAINER_ID
-            // 'border-t', 'border-gray-700', 'mt-4',
-            container.classList.add('pt-4', 'space-y-4')
+        // add buttons to fm-toolbar
+        addContainerToToolbar() {
+            const toolbar = document.querySelector('#fm-toolbar')
 
-            // append buttons to container
-            SUPPORTED_DOWNLOADERS.forEach((downloader) => {
-                utils.getButtonsByDownloader(downloader).forEach((item) => {
-                    container.appendChild(item)
-                })
+            if (!toolbar) {
+                return
+            }
+
+            if (document.getElementById(GE_CONTAINER_ID)) {
+                return
+            }
+
+            const container = document.createElement('div')
+            container.id = GE_CONTAINER_ID
+            container.className = 'panel mb-3 px-2 py-1.5 shadow-lg shadow-black/20'
+
+            const row = document.createElement('div')
+            row.className = 'flex items-center gap-1 sm:gap-1.5'
+
+            utils.getActionButtons().forEach((button) => {
+                row.appendChild(button)
             })
 
-            // append container to sidebar
-            document.querySelector('#index_sidebar').appendChild(container)
+            container.appendChild(row)
+            toolbar.insertAdjacentElement('beforebegin', container)
         },
     }
 
     const main = {
-        init() {
+        async init() {
             utils.initSettings()
 
+            Object.defineProperty(Object.prototype, 'loadSeq', {
+                set: function (val) {
+                    this._loadSeq = val;
+                    if (this.constructor.name === 'FileManager' || (this.root && this.state)) {
+                        unsafeWindow.GE_FileManager = this;
+                    }
+                },
+                get: function () {
+                    return this._loadSeq;
+                },
+                configurable: true
+            });
+
             // Observe changes in the DOM
-            const observer = new MutationObserver((_mutations, _obs) => {
-                // Check if the target node is available
+            const observer = new MutationObserver(() => {
                 const container = document.getElementById(GE_CONTAINER_ID)
 
-                // Check if the mainContent is available
-                if (appdata.fileManager?.mainContent?.data) {
-                    // Add buttons to sidebar
-                    !container && operations.addContainerToSidebar()
-                    // Stop observing
-                    // obs.disconnect()
-                } else {
-                    // remove GofileEnhanced_Container
-                    container && container.remove()
+                if (unsafeWindow.GE_FileManager) {
+                    if (!container) {
+                        operations.addContainerToToolbar()
+                    }
+                } else if (container) {
+                    container.remove()
                 }
             })
 
-            // Observe the target node "#index_main", which is in the DOM initially.
-            const targetNode = document.getElementById('index_main')
-            const config = { childList: true, subtree: true }
-            if (targetNode) {
-                observer.observe(targetNode, config)
-            } else {
-                console.error('[Gofile Enhanced] #index_main not found.')
-            }
+            observer.observe(document.documentElement, {
+                childList: true,
+                subtree: true
+            })
         },
-    }
+    };
 
-    // Script Entry Point
-    main.init()
+    await main.init()
 })()
