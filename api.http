@@ -1,11 +1,5 @@
 # ################################ Gofile
 
-# IDM EF2 File Formats, support CRLF(\r\n) only
-# <
-# url
-# cookie: accountToken=ABCDEFG
-# >
-
 # ################################ AB Download Manager
 
 # ping, expect a pong.
@@ -14,6 +8,7 @@ POST http://localhost:15151/ping
 ### send download task
 POST http://localhost:15151/start-headless-download
 Content-Type: application/json
+X-API-Key: apiKeyHere
 
 {
   "downloadSource": {
@@ -23,7 +18,7 @@ Content-Type: application/json
     }
   },
   "name": "file name",
-   "startDownload": true
+  "startDownload": true
 }
 
 # ################################ Aria2 RPC
@@ -37,7 +32,7 @@ POST http://localhost:6800/jsonrpc
         "jsonrpc": "2.0",
         "method": "aria2.addUri",
         "params": [
-            "token:998486",
+            "token:666888",
             [
                 "https://cold-na-phx-2.gofile.io/download/web/777.png"
             ],
@@ -54,7 +49,7 @@ POST http://localhost:6800/jsonrpc
         "jsonrpc": "2.0",
         "method": "aria2.addUri",
         "params": [
-            "token:998486",
+            "token:666888",
             [
                 "https://cold4.gofile.io/download/web/666.png"
             ],
@@ -67,3 +62,11 @@ POST http://localhost:6800/jsonrpc
         ]
     }
 ]
+
+# ################################ IDM
+
+# IDM EF2 File Formats, support CRLF(\r\n) only
+# <
+# url
+# cookie: accountToken=ABCDEFG
+# >

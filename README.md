@@ -72,7 +72,7 @@ In IDM, go to Tasks → Import → From "IDM export file" → Select the .ef2 fi
 > "Folder Download" can only be used with ABDM and Aria2, and it is **still in the testing phase**.
 
 > [!NOTE]
-> You need to properly configure the download folder for ABDM or Aria2 (absolute paths, such as `D:/Download`).
+> You need to properly configure the download folder for ABDM or Aria2 (Absolute path, default path is `D:/Downloads`).
 
 If you did not set the download folder, files may be downloaded to unexpected locations (usually the root directory of your download manager's or your drive's), or just refuse to download.
 
