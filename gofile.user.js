@@ -41,10 +41,12 @@
 
     const I18N = {
         'zh-CN': {
+            abdm_apikey: "ABDM API Key",
+            abdm_apikey_placeholder: "若未设置留空即可",
             abdm_connected: 'ABDM 连接成功',
             abdm_connection_fail: 'ABDM 连接失败',
             abdm_download_folder: 'ABDM 下载目录',
-            abdm_download_folder_placeholder: '若留空则使用 ABDM 默认设置',
+            abdm_download_folder_placeholder: '',
             abdm_port: 'ABDM 端口',
             abdm_port_not_configured: 'ABDM 端口未配置',
             abdm_port_placeholder: '默认为 15151',
@@ -56,7 +58,7 @@
             aria2_rpc_secret: 'Aria2 RPC 密钥',
             aria2_rpc_secret_placeholder: '若未设置留空即可',
             aria2_rpc_dir: 'Aria2 下载目录',
-            aria2_rpc_dir_placeholder: '若留空则使用 Aria2 默认设置',
+            aria2_rpc_dir_placeholder: '',
             aria2_settings: 'Aria2 设置',
             cancel: '取消',
             config: '配置',
@@ -85,10 +87,12 @@
             request_timed_out: '请求超时',
         },
         'en-US': {
-            abdm_connected: 'ABDM connected successfully',
+            abdm_apikey: "ABDM API Key",
+            abdm_apikey_placeholder: "Leave empty if not set",
+            abdm_connected: 'ABDM connected',
             abdm_connection_fail: 'ABDM connection failed',
             abdm_download_folder: 'ABDM Download Folder',
-            abdm_download_folder_placeholder: 'Leave empty to use ABDM default settings',
+            abdm_download_folder_placeholder: '',
             abdm_port: 'ABDM Port',
             abdm_port_not_configured: 'ABDM port not configured',
             abdm_port_placeholder: 'Default is 15151',
@@ -100,7 +104,7 @@
             aria2_rpc_secret: 'Aria2 RPC Secret',
             aria2_rpc_secret_placeholder: 'Leave empty if not set',
             aria2_rpc_dir: 'Aria2 RPC Directory',
-            aria2_rpc_dir_placeholder: 'Leave empty to use Aria2 default settings',
+            aria2_rpc_dir_placeholder: '',
             aria2_settings: 'Aria2 Settings',
             cancel: 'Cancel',
             config: 'Config',
@@ -149,10 +153,16 @@
                 },
                 abdmDownloadFolder: {
                     key: 'abdm_download_folder',
-                    defaultValue: '',
+                    defaultValue: 'D:/Downloads',
                     i18nKey: 'abdm_download_folder',
                     placeholderI18nKey: 'abdm_download_folder_placeholder',
                 },
+                abdmApiKey: {
+                    key: 'abdm_apikey',
+                    defaultValue: '',
+                    i18nKey: 'abdm_apikey',
+                    placeholderI18nKey: 'abdm_apikey_placeholder',
+                }
             },
         },
         Aria2: {
@@ -173,7 +183,7 @@
                 },
                 rpcDir: {
                     key: 'aria2_rpc_dir',
-                    defaultValue: '',
+                    defaultValue: 'D:/Downloads',
                     i18nKey: 'aria2_rpc_dir',
                     placeholderI18nKey: 'aria2_rpc_dir_placeholder',
                 },
@@ -420,7 +430,7 @@
             });
         },
         sendToABDM(tbdItems) {
-            const { abdmPort, abdmDownloadFolder } = utils.getAllSettings('ABDM')
+            const { abdmPort, abdmDownloadFolder, abdmApiKey } = utils.getAllSettings('ABDM')
             const cookie = utils.getToken()
 
             if (!abdmPort) {
@@ -439,7 +449,7 @@
                     },
                     name: item.name,
                     folder: item.downloadFolder || (abdmDownloadFolder === '' ? '/' : abdmDownloadFolder),
-                    startDownload: true
+                    startDownload: false
                 }
             })
 
@@ -447,6 +457,7 @@
                 try {
                     const res = await utils.gmFetch(`http://localhost:${abdmPort}/start-headless-download`, {
                         method: 'POST',
+                        headers: abdmApiKey ? { "X-API-Key": abdmApiKey } : {},
                         body: JSON.stringify(data),
                     })
                     if (res.ok) {
@@ -469,12 +480,16 @@
         },
         async testABDMConnection(form) {
             const port = form.elements.abdm_port.value
+            const apiKey = form.elements.abdm_apikey.value
 
             if (port) {
                 try {
                     const res = await utils.gmFetch(
                         `http://localhost:${port}/ping`,
-                        { method: "POST" }
+                        {
+                            method: "POST",
+                            headers: { "X-API-Key": apiKey }
+                        }
                     )
                     if (res.ok) {
                         toast(utils.getTranslation('abdm_connected'), {
