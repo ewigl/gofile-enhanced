@@ -367,17 +367,13 @@
                             } else {
                                 toast(
                                     `${utils.getTranslation('failed_to_fetch_folder_content')} ${childItem.name}`,
-                                    {
-                                        type: 'error'
-                                    }
+                                    { type: 'error' }
                                 );
                             }
                         } catch (error) {
                             toast(
                                 `${utils.getTranslation('failed_to_fetch_folder_content')} ${childItem.name} ${error}`,
-                                {
-                                    type: 'error'
-                                }
+                                { type: 'error' }
                             );
                         }
                     }
@@ -401,10 +397,11 @@
         recursiveDownload(tbdItems, callback) {
             const fileItems = tbdItems.map((item) => {
                 return {
-                    name: item.name,
+                    ...item,
                     path: utils.maskFolderPath(item.downloadFolder || ''),
                 }
             })
+
             const fileList = fileItems
                 .map((file) => {
                     const pathWithBoldSeparators = file.path.replace(/\//g, '<span class="text-brand-300"> / </span>')
@@ -422,17 +419,18 @@
                 title: `${utils.getTranslation('file_list')} (${fileItems.length})`,
                 size: "2xl",
                 content: `
-                <div class="mb-3 flex items-start gap-2.5 rounded-xl border p-3.5 border-amber-500/20 bg-amber-500/10">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="triangle-alert" class="lucide lucide-triangle-alert mt-0.5 size-4 shrink-0 text-amber-400" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
-                    <div class="text-sm leading-relaxed text-slate-300">
-                        ${utils.getTranslation("please_make_sure_you_have_configured_download_folder")}
+                    <div class="mb-3 flex items-start gap-2.5 rounded-xl border p-3.5 border-amber-500/20 bg-amber-500/10">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="triangle-alert" class="lucide lucide-triangle-alert mt-0.5 size-4 shrink-0 text-amber-400" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+                        <div class="text-sm leading-relaxed text-slate-300">
+                            ${utils.getTranslation("please_make_sure_you_have_configured_download_folder")}
+                        </div>
                     </div>
-                </div>
-                <div class="flex items-start gap-3">
-                    <div class="text-sm leading-relaxed text-slate-300 space-y-1.5">
-                        ${fileList.join('')}
+                    <div class="flex items-start gap-3">
+                        <div class="text-sm leading-relaxed text-slate-300 space-y-1.5">
+                            ${fileList.join('')}
+                        </div>
                     </div>
-                </div>`,
+                `,
                 actions: [
                     { label: utils.getTranslation('cancel'), variant: 'ghost' },
                     {
