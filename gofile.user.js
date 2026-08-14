@@ -155,13 +155,13 @@
                     key: 'abdm_port',
                     defaultValue: '15151',
                 },
-                abdmDownloadFolder: {
-                    key: 'abdm_download_folder',
-                    defaultValue: 'D:/Downloads',
-                },
                 abdmApiKey: {
                     key: 'abdm_apikey',
                     defaultValue: '',
+                },
+                abdmDownloadFolder: {
+                    key: 'abdm_download_folder',
+                    defaultValue: 'D:/Downloads',
                 },
                 abdmAutoStartDownload: {
                     key: "abdm_auto_start_download",
