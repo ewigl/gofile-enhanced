@@ -76,6 +76,6 @@ In IDM, go to Tasks → Import → From "IDM export file" → Select the .ef2 fi
 
 If you did not set the download folder, files may be downloaded to unexpected locations (usually the root directory of your download manager's or your drive's), or just refuse to download.
 
-![file list](https://github.com/user-attachments/assets/9a5e5dc1-c296-4bd3-9f7a-58494541cc7e)
+![file list](https://github.com/user-attachments/assets/cca8e363-5671-4a92-97cf-5d5759a3ac35)
 
-![config](https://github.com/user-attachments/assets/561dbe1e-8ea6-40fa-ad95-ca6fd1055474)
+![config](https://github.com/user-attachments/assets/0abb3628-a3aa-4765-ba17-c0a5d46f9946)
