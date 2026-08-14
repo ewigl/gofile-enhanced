@@ -43,6 +43,7 @@
         'zh-CN': {
             abdm_apikey: "ABDM API Key",
             abdm_apikey_placeholder: "若未设置留空即可",
+            abdm_auto_start_download: '自动开始下载',
             abdm_connected: 'ABDM 连接成功',
             abdm_connection_fail: 'ABDM 连接失败',
             abdm_download_folder: 'ABDM 下载目录',
@@ -55,6 +56,7 @@
             aria2_connection_fail: 'Aria2 连接失败',
             aria2_rpc_address: 'Aria2 RPC 地址',
             aria2_rpc_address_placeholder: '默认为 http://localhost:6800/jsonrpc',
+            aria2_rpc_auto_start_download: '自动开始下载',
             aria2_rpc_secret: 'Aria2 RPC 密钥',
             aria2_rpc_secret_placeholder: '若未设置留空即可',
             aria2_rpc_dir: 'Aria2 下载目录',
@@ -89,6 +91,7 @@
         'en-US': {
             abdm_apikey: "ABDM API Key",
             abdm_apikey_placeholder: "Leave empty if not set",
+            abdm_auto_start_download: 'Auto Start Download',
             abdm_connected: 'ABDM connected',
             abdm_connection_fail: 'ABDM connection failed',
             abdm_download_folder: 'ABDM Download Folder',
@@ -101,6 +104,7 @@
             aria2_connection_fail: 'Aria2 connection failed',
             aria2_rpc_address: 'Aria2 RPC Address',
             aria2_rpc_address_placeholder: 'Default is http://localhost:6800/jsonrpc',
+            aria2_rpc_auto_start_download: 'Auto Start Dwonload',
             aria2_rpc_secret: 'Aria2 RPC Secret',
             aria2_rpc_secret_placeholder: 'Leave empty if not set',
             aria2_rpc_dir: 'Aria2 RPC Directory',
@@ -156,6 +160,10 @@
                 abdmApiKey: {
                     key: 'abdm_apikey',
                     defaultValue: '',
+                },
+                abdmAutoStartDownload: {
+                    key: "abdm_auto_start_download",
+                    defaultValue: true
                 }
             },
         },
@@ -175,6 +183,10 @@
                     key: 'aria2_rpc_dir',
                     defaultValue: 'D:/Downloads',
                 },
+                rpcAutoStartDownload: {
+                    key: "aria2_rpc_auto_start_download",
+                    defaultValue: true
+                }
             },
         },
     }
@@ -223,7 +235,13 @@
         },
         saveForm(category, form) {
             Object.entries(GE_CONFIG[category].settings).forEach(([settingKey, setting]) => {
-                utils.setSettings(category, settingKey, form.elements[setting.key].value)
+                const element = form.elements[setting.key]
+
+                if (element.type === 'checkbox') {
+                    utils.setSettings(category, settingKey, element.checked)
+                } else {
+                    utils.setSettings(category, settingKey, element.value)
+                }
             })
         },
         resetForm(category, form) {
@@ -231,9 +249,16 @@
 
             Object.keys(settings).forEach((key) => {
                 const setting = settings[key]
+                const element = form?.elements[setting.key]
 
-                if (form?.elements[setting.key]) {
-                    form.elements[setting.key].value = setting.defaultValue
+                if (!element) {
+                    return
+                }
+
+                if (element.type === 'checkbox') {
+                    element.checked = setting.defaultValue
+                } else {
+                    element.value = setting.defaultValue
                 }
             })
         },
@@ -418,7 +443,7 @@
             });
         },
         sendToABDM(tbdItems) {
-            const { abdmPort, abdmDownloadFolder, abdmApiKey } = utils.getAllSettings('ABDM')
+            const { abdmPort, abdmDownloadFolder, abdmApiKey, abdmAutoStartDownload } = utils.getAllSettings('ABDM')
             const cookie = utils.getToken()
 
             if (!abdmPort) {
@@ -437,7 +462,7 @@
                     },
                     name: item.name,
                     folder: item.downloadFolder || (abdmDownloadFolder === '' ? '/' : abdmDownloadFolder),
-                    startDownload: false
+                    startDownload: abdmAutoStartDownload
                 }
             })
 
@@ -534,7 +559,7 @@
             // busy.dismiss();
         },
         async sendToAria2(tbdItems) {
-            const { rpcAddress, rpcSecret, rpcDir } = utils.getAllSettings('Aria2')
+            const { rpcAddress, rpcSecret, rpcDir, rpcAutoStartDownload } = utils.getAllSettings('Aria2')
 
             const cookie = utils.getToken()
 
@@ -551,6 +576,7 @@
                         {
                             header,
                             dir: item.downloadFolder || rpcDir,
+                            pause: !rpcAutoStartDownload
                         },
                     ],
                 }
@@ -751,24 +777,42 @@
             ]
         },
         getFormInputItemTemplate(setting) {
-            const { key } = setting
+            const { key, defaultValue } = setting
 
-            return `
-                <div>
-                    <label for="${key}" class="mb-1.5 block text-xs font-medium text-slate-400">
+            if (typeof defaultValue === 'boolean') {
+                return `
+                <div class="flex">
+                    <label class="flex items-center cursor-pointer gap-2.5 text-sm text-slate-400">
+                        <input
+                            id="${key}"
+                            name="${key}"
+                            type="checkbox"
+                            ${utils.getValue(key) ? 'checked' : ''}
+                            class="size-5 sm:size-5"
+                        >
                         ${utils.getTranslation(key)}
                     </label>
-                    <input
-                        id="${key}"
-                        name="${key}"
-                        value="${utils.getValue(key)}"
-                        class="input"
-                        type="text"
-                        maxlength="200"
-                        placeholder="${utils.getTranslation(`${key}_placeholder`)}"
-                        autocomplete="off"
-                    >
+                    <span class="flex-1" />
                 </div>
+                `
+            }
+
+            return `
+            <div>
+                <label for="${key}" class="mb-1.5 block text-xs font-medium text-slate-400">
+                    ${utils.getTranslation(key)}
+                </label>
+                <input
+                    id="${key}"
+                    name="${key}"
+                    value="${utils.getValue(key)}"
+                    class="input"
+                    type="text"
+                    maxlength="200"
+                    placeholder="${utils.getTranslation(`${key}_placeholder`)}"
+                    autocomplete="off"
+                >
+            </div>
             `
         },
         getConfigPanel(category) {
