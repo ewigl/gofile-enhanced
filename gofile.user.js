@@ -37,7 +37,7 @@
     const CRLF = '\r\n'
 
     const GE_CONTAINER_ID = 'ge-container-bar'
-    const GE_FORM_ID_PREFIX = 'GofileEnhanced_Form'
+    const GE_FORM_ID_PREFIX = 'gofile-enhenced-form'
 
     const I18N = {
         'zh-CN': {
@@ -684,7 +684,7 @@
                                         {
                                             label: utils.getTranslation('confirm'), variant: 'primary',
                                             onClick: (h) => {
-                                                const form = document.forms[`${GE_FORM_ID_PREFIX}_${downloader}`]
+                                                const form = document.forms[`${GE_FORM_ID_PREFIX}-${downloader}`]
 
                                                 utils.saveForm(downloader, form)
 
@@ -699,7 +699,7 @@
 
                                 if (testButton) {
                                     testButton.addEventListener('click', () => {
-                                        const form = document.forms[`${GE_FORM_ID_PREFIX}_${downloader}`]
+                                        const form = document.forms[`${GE_FORM_ID_PREFIX}-${downloader}`]
 
                                         if (downloader === 'ABDM') {
                                             utils.testABDMConnection(form)
@@ -711,7 +711,7 @@
 
                                 if (resetButton) {
                                     resetButton.addEventListener('click', () => {
-                                        const form = document.forms[`${GE_FORM_ID_PREFIX}_${downloader}`]
+                                        const form = document.forms[`${GE_FORM_ID_PREFIX}-${downloader}`]
 
                                         if (downloader === 'Aria2') {
                                             utils.resetForm('Aria2', form)
@@ -806,7 +806,7 @@
                         </div>
                     </div>
 
-                    <form id="${GE_FORM_ID_PREFIX}_${config.id}" class="space-y-4">
+                    <form id="${GE_FORM_ID_PREFIX}-${config.id}" class="space-y-4">
                         ${Object.entries(config.settings).map(([_key, setting]) => utils.getFormInputItemTemplate(setting)).join('')}
                         ${extraActions}
                     </form>
