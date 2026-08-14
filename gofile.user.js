@@ -2,7 +2,7 @@
 // @name               GoFile Enhanced
 // @name:zh-CN         GoFile 增强
 // @namespace          https://github.com/ewigl/gofile-enhanced
-// @version            0.9.0
+// @version            0.9.5
 // @description        Batch-download GoFiles. Folder download. Automatically bypass high traffic alert. Use direct links. Built-in support for download managers like AB Download Manager, Aria2, and IDM.
 // @description:zh-CN  GoFile 文件批量下载。支持直链下载、下载文件夹内容、绕过流量警告。可以配合 AB Download Manager、Aria2、IDM 等下载器使用。
 // @author             Licht
@@ -78,6 +78,7 @@
             please_make_sure_you_have_configured_download_folder: '下载前请确保已正确配置下载目录。',
             reference: "参考",
             reset_aria2: '默认设置',
+            select_all: '全选',
             success: '成功',
             successfully_fetched_file_list: '成功获取文件列表',
             successfully_reset: '已重置',
@@ -126,6 +127,7 @@
             please_make_sure_you_have_configured_download_folder: 'Before downloading, make sure you have configured the download folder correctly.',
             reference: "Reference",
             reset_aria2: 'Default Settings',
+            select_all: 'Select All',
             success: 'Success',
             successfully_fetched_file_list: 'Successfully fetched file list',
             successfully_reset: 'successfully reset',
@@ -396,24 +398,42 @@
         },
         recursiveDownload(tbdItems, callback) {
             const fileItems = tbdItems.map((item) => {
+                const uniqueKey = item.id || item.link || `${item.downloadFolder || ''}/${item.name}`
+
                 return {
                     ...item,
+                    uniqueKey,
                     path: utils.maskFolderPath(item.downloadFolder || ''),
                 }
             })
 
+            const getSelectedItems = () => {
+                const checkedBoxes = document.querySelectorAll('[data-ge-file-checkbox]:checked')
+                const checkedKeys = new Set(Array.from(checkedBoxes).map((checkbox) => checkbox.dataset.geFileCheckbox))
+
+                return fileItems.filter((file) => checkedKeys.has(file.uniqueKey))
+            }
+
             const fileList = fileItems
-                .map((file) => {
+                .slice()
+                .sort((left, right) => `${left.path}/${left.name}`.localeCompare(`${right.path}/${right.name}`))
+                .map((file, index) => {
                     const pathWithBoldSeparators = file.path.replace(/\//g, '<span class="text-brand-300"> / </span>')
-                    return `${pathWithBoldSeparators}<span class="text-brand-300"> / </span><span class="text-brand-300">${file.name}</span>`
+                    const filePath = `${pathWithBoldSeparators}<span class="text-brand-300"> / </span><span class="text-brand-300">${file.name}</span>`
+
+                    return `
+                        <label class="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-800/30">
+                            <input
+                                type="checkbox"
+                                data-ge-file-checkbox="${file.uniqueKey}"
+                                checked
+                                class="size-4 rounded border-slate-600 bg-slate-900 text-brand-500 focus:ring-brand-500"
+                            >
+                            <span class="shrink-0 rounded-md px-2 py-1 font-mono text-xs font-bold tracking-wide bg-sky-500/10 text-sky-400 ring-1 ring-sky-500/30">${index + 1}</span>
+                            <span class="text-sm leading-relaxed text-slate-300">${filePath}</span>
+                        </label>
+                    `
                 })
-                .sort()
-                .map((entry, index) => `
-                    <p class="flex items-center gap-2">
-                        <span class="shrink-0 rounded-md px-2 py-1 font-mono text-xs font-bold tracking-wide bg-sky-500/10 text-sky-400 ring-1 ring-sky-500/30">${index + 1}</span>
-                        <span>${entry}</span>
-                    </p>
-                `)
 
             popup.open({
                 title: `${utils.getTranslation('file_list')} (${fileItems.length})`,
@@ -425,8 +445,21 @@
                             ${utils.getTranslation("please_make_sure_you_have_configured_download_folder")}
                         </div>
                     </div>
+
+                    <div class="mb-1.5 flex items-center justify-between rounded-xl bg-slate-900/40 px-2 py-2">
+                        <label class="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-300">
+                            <input
+                                type="checkbox"
+                                data-ge-select-all
+                                checked
+                                class="size-4 rounded border-slate-600 bg-slate-900 text-brand-500 focus:ring-brand-500"
+                            >
+                            <span class="shrink-0 rounded-md px-2 py-1 font-mono text-xs font-bold tracking-wide bg-sky-500/10 text-sky-400 ring-1 ring-sky-500/30">${utils.getTranslation('select_all')}</span>
+                        </label>
+                    </div>
+
                     <div class="flex items-start gap-3">
-                        <div class="text-sm leading-relaxed text-slate-300 space-y-1.5">
+                        <div class="text-sm leading-relaxed text-slate-300 space-y-1.5 w-full">
                             ${fileList.join('')}
                         </div>
                     </div>
@@ -435,10 +468,46 @@
                     { label: utils.getTranslation('cancel'), variant: 'ghost' },
                     {
                         label: utils.getTranslation('download'), variant: 'primary',
-                        onClick: (h) => { h.close(); callback(); }
+                        onClick: (h) => {
+                            const selectedItems = getSelectedItems()
+
+                            if (selectedItems.length === 0) {
+                                toast(utils.getTranslation('no_item_selected'), {
+                                    type: 'warning',
+                                })
+                                return
+                            }
+
+                            h.close()
+                            callback(selectedItems)
+                        }
                     },
                 ],
             });
+
+            queueMicrotask(() => {
+                const selectAllCheckbox = document.querySelector('[data-ge-select-all]')
+                const fileCheckboxes = [...document.querySelectorAll('[data-ge-file-checkbox]')]
+
+                if (!selectAllCheckbox || fileCheckboxes.length === 0) {
+                    return
+                }
+
+                const syncSelectAll = () => {
+                    const allChecked = fileCheckboxes.length > 0 && fileCheckboxes.every((checkbox) => checkbox.checked)
+                    selectAllCheckbox.checked = allChecked
+                }
+
+                selectAllCheckbox.addEventListener('change', (event) => {
+                    fileCheckboxes.forEach((checkbox) => {
+                        checkbox.checked = event.target.checked
+                    })
+                })
+
+                fileCheckboxes.forEach((checkbox) => {
+                    checkbox.addEventListener('change', syncSelectAll)
+                })
+            })
         },
         sendToABDM(tbdItems) {
             const { abdmPort, abdmDownloadFolder, abdmApiKey, abdmAutoStartDownload } = utils.getAllSettings('ABDM')
@@ -780,13 +849,13 @@
             if (typeof defaultValue === 'boolean') {
                 return `
                 <div class="flex">
-                    <label class="flex items-center cursor-pointer gap-2.5 text-sm text-slate-400">
+                    <label class="flex items-center cursor-pointer gap-2.5 text-sm font-medium text-slate-400">
                         <input
                             id="${key}"
                             name="${key}"
                             type="checkbox"
                             ${utils.getValue(key) ? 'checked' : ''}
-                            class="size-5 sm:size-5"
+                            class="size-4.5"
                         >
                         ${utils.getTranslation(key)}
                     </label>
@@ -896,17 +965,17 @@
             }
 
             const dispatchToDownloader = (folderPrefix, sendFn) => {
-                const preparedItems = tbdItems.map((item) => ({
+                const prepareItems = (items) => items.map((item) => ({
                     ...item,
                     downloadFolder: folderPrefix + item.downloadFolder,
                 }))
 
                 if (!shouldShowFileList) {
-                    sendFn(preparedItems)
+                    sendFn(prepareItems(tbdItems))
                     return
                 }
 
-                utils.recursiveDownload(tbdItems, () => sendFn(preparedItems))
+                utils.recursiveDownload(tbdItems, (selectedItems) => sendFn(prepareItems(selectedItems)))
             }
 
             switch (format) {
