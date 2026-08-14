@@ -148,20 +148,14 @@
                 abdmPort: {
                     key: 'abdm_port',
                     defaultValue: '15151',
-                    i18nKey: 'abdm_port',
-                    placeholderI18nKey: 'abdm_port_placeholder',
                 },
                 abdmDownloadFolder: {
                     key: 'abdm_download_folder',
                     defaultValue: 'D:/Downloads',
-                    i18nKey: 'abdm_download_folder',
-                    placeholderI18nKey: 'abdm_download_folder_placeholder',
                 },
                 abdmApiKey: {
                     key: 'abdm_apikey',
                     defaultValue: '',
-                    i18nKey: 'abdm_apikey',
-                    placeholderI18nKey: 'abdm_apikey_placeholder',
                 }
             },
         },
@@ -172,20 +166,14 @@
                 rpcAddress: {
                     key: 'aria2_rpc_address',
                     defaultValue: 'http://localhost:6800/jsonrpc',
-                    i18nKey: 'aria2_rpc_address',
-                    placeholderI18nKey: 'aria2_rpc_address_placeholder',
                 },
                 rpcSecret: {
                     key: 'aria2_rpc_secret',
                     defaultValue: '',
-                    i18nKey: 'aria2_rpc_secret',
-                    placeholderI18nKey: 'aria2_rpc_secret_placeholder',
                 },
                 rpcDir: {
                     key: 'aria2_rpc_dir',
                     defaultValue: 'D:/Downloads',
-                    i18nKey: 'aria2_rpc_dir',
-                    placeholderI18nKey: 'aria2_rpc_dir_placeholder',
                 },
             },
         },
@@ -763,12 +751,12 @@
             ]
         },
         getFormInputItemTemplate(setting) {
-            const { key, i18nKey, placeholderI18nKey } = setting
+            const { key } = setting
 
             return `
                 <div>
                     <label for="${key}" class="mb-1.5 block text-xs font-medium text-slate-400">
-                        ${utils.getTranslation(i18nKey)}
+                        ${utils.getTranslation(key)}
                     </label>
                     <input
                         id="${key}"
@@ -777,7 +765,7 @@
                         class="input"
                         type="text"
                         maxlength="200"
-                        placeholder="${utils.getTranslation(placeholderI18nKey)}"
+                        placeholder="${utils.getTranslation(`${key}_placeholder`)}"
                         autocomplete="off"
                     >
                 </div>
