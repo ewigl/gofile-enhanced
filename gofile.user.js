@@ -2,7 +2,7 @@
 // @name               GoFile Enhanced
 // @name:zh-CN         GoFile 增强
 // @namespace          https://github.com/ewigl/gofile-enhanced
-// @version            0.9.5
+// @version            0.9.6
 // @description        Batch-download GoFiles. Folder download. Automatically bypass high traffic alert. Use direct links. Built-in support for download managers like AB Download Manager, Aria2, and IDM.
 // @description:zh-CN  GoFile 文件批量下载。支持直链下载、下载文件夹内容、绕过流量警告。可以配合 AB Download Manager、Aria2、IDM 等下载器使用。
 // @author             Licht
@@ -741,7 +741,7 @@
             })
 
             const updateButtonVisibility = () => {
-                const hasSelection = !!GE_FileManager?.state?.selection && GE_FileManager.state.selection.size > 0
+                const hasSelection = GE_FileManager.state.fileView || (!!GE_FileManager?.state?.selection && GE_FileManager.state.selection.size > 0)
                 button.classList.toggle('hidden', !hasSelection)
             }
 
@@ -932,11 +932,14 @@
     const operations = {
         async handleExport(options) {
             const { format, recursive } = options
-            const abdmDownloadFolder = utils.getSettings('ABDM', 'abdmDownloadFolder')
-            const aria2RpcDir = utils.getSettings('Aria2', 'rpcDir')
+            const fileView = GE_FileManager.state.fileView
             const selectedKeys = Array.from(GE_FileManager.state.selection || [])
 
-            if (recursive && selectedKeys.length === 0) {
+            const abdmDownloadFolder = utils.getSettings('ABDM', 'abdmDownloadFolder')
+            const aria2RpcDir = utils.getSettings('Aria2', 'rpcDir')
+
+
+            if (!fileView && recursive && selectedKeys.length === 0) {
                 return toast(utils.getTranslation('no_item_selected'), {
                     type: 'warning',
                 })
@@ -948,20 +951,23 @@
             })
 
             let tbdItems = []
-
-            if (recursive) {
-                const { items } = await utils.collectAllItems(selectedKeys)
-                tbdItems = items
+            if (fileView) {
+                tbdItems = [GE_FileManager.state.folder]
             } else {
-                const allFiles = GE_FileManager.state.folder.children
-                const tbdKeys = selectedKeys.filter((key) => allFiles[key].type === 'file')
-                tbdItems = tbdKeys.map((key) => allFiles[key])
-            }
+                if (recursive) {
+                    const { items } = await utils.collectAllItems(selectedKeys)
+                    tbdItems = items
+                } else {
+                    const allFiles = GE_FileManager.state.folder.children
+                    const tbdKeys = selectedKeys.filter((key) => allFiles[key].type === 'file')
+                    tbdItems = tbdKeys.map((key) => allFiles[key])
+                }
 
-            if (tbdItems.length === 0) {
-                return toast(utils.getTranslation('no_item_selected'), {
-                    type: "warning"
-                });
+                if (tbdItems.length === 0) {
+                    return toast(utils.getTranslation('no_item_selected'), {
+                        type: "warning"
+                    });
+                }
             }
 
             const dispatchToDownloader = (folderPrefix, sendFn) => {
@@ -998,11 +1004,11 @@
                     break
             }
         },
-        // add buttons to fm-toolbar
-        addContainerToToolbar() {
-            const toolbar = document.querySelector('#fm-toolbar')
+        // add buttons to file manager
+        addEnhancedContainer(fileView) {
+            const fmEL = fileView ? document.querySelector('#fm-root') : document.querySelector('#fm-toolbar')
 
-            if (!toolbar) {
+            if (!fmEL) {
                 return
             }
 
@@ -1013,6 +1019,7 @@
             const container = document.createElement('div')
             container.id = GE_CONTAINER_ID
             container.className = 'panel mb-3 px-2 py-1.5 shadow-lg shadow-black/20'
+            fileView && container.classList.add('mx-auto', 'max-w-3xl')
 
             const row = document.createElement('div')
             row.className = 'flex items-center gap-1 sm:gap-1.5'
@@ -1022,7 +1029,7 @@
             })
 
             container.appendChild(row)
-            toolbar.insertAdjacentElement('beforebegin', container)
+            fileView ? fmEL.prepend(container) : fmEL.insertAdjacentElement('beforebegin', container)
         },
     }
 
@@ -1047,9 +1054,10 @@
             const observer = new MutationObserver(() => {
                 const container = document.getElementById(GE_CONTAINER_ID)
 
-                if (unsafeWindow.GE_FileManager) {
+                if (unsafeWindow.GE_FileManager && unsafeWindow.GE_FileManager.state.status === "ready") {
                     if (!container) {
-                        operations.addContainerToToolbar()
+                        operations.addEnhancedContainer(unsafeWindow.GE_FileManager.state.fileView)
+                    } else {
                     }
                 } else if (container) {
                     container.remove()
