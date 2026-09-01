@@ -7,7 +7,6 @@
 // @description:zh-CN  GoFile 文件批量下载。支持直链下载、下载文件夹内容、绕过流量警告。可以配合 AB Download Manager、Aria2、IDM 等下载器使用。
 // @author             Licht
 // @license            MIT
-// @homepage           https://github.com/ewigl/gofile-enhanced
 // @homepageURL        https://github.com/ewigl/gofile-enhanced
 // @match              http*://gofile.io/*
 // @icon               https://gofile.io/assets/img/favicon32.png
