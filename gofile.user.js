@@ -2,7 +2,7 @@
 // @name               GoFile Enhanced
 // @name:zh-CN         GoFile 增强
 // @namespace          https://github.com/ewigl/gofile-enhanced
-// @version            0.9.6
+// @version            0.9.7
 // @description        Batch-download GoFiles. Folder download. Automatically bypass high traffic alert. Use direct links. Built-in support for download managers like AB Download Manager, Aria2, and IDM.
 // @description:zh-CN  GoFile 文件批量下载。支持直链下载、下载文件夹内容、绕过流量警告。可以配合 AB Download Manager、Aria2、IDM 等下载器使用。
 // @author             Licht
@@ -22,15 +22,14 @@
   'use strict';
 
   // import modules from gofile.io
-  const contentsModule = await import('/js/services/contents.js');
-  const menuModule = await import('/js/ui/menu.js');
-  const popupModule = await import('/js/ui/popup.js');
-  const toastModule = await import('/js/ui/toast.js');
+  const gOrigin = location.origin;
 
-  const contents = contentsModule;
-  const { openMenu } = menuModule;
-  const { popup } = popupModule;
-  const { toast } = toastModule;
+  const [{ getFolder }, { openMenu }, { popup }, { toast }] = await Promise.all([
+    import(new URL('/js/services/contents.js', gOrigin)),
+    import(new URL('/js/ui/menu.js', gOrigin)),
+    import(new URL('/js/ui/popup.js', gOrigin)),
+    import(new URL('/js/ui/toast.js', gOrigin)),
+  ]);
 
   const DEFAULT_LANGUAGE = 'en-US';
   const CRLF = '\r\n';
@@ -354,7 +353,7 @@
             try {
               didTraverseFolder = true;
 
-              const res = await contents.getFolder(GE_FileManager.state.account.token, childItem.id);
+              const res = await getFolder(GE_FileManager.state.account.token, childItem.id);
 
               if (res?.data) {
                 await collectItems(res.data, currentPath, true);
