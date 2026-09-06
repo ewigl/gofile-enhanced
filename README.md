@@ -2,15 +2,17 @@
 
 Batch-download GoFiles. Folder download. Automatically bypass high traffic alert. Use direct links. Built-in support for download managers like [AB Download Manager](https://github.com/amir1376/ab-download-manager), [Aria2](https://github.com/aria2/aria2) and [Internet Download Manager](https://www.internetdownloadmanager.com/).
 
+---
+
 [![中文文档](https://img.shields.io/badge/中文文档-blue)](https://ewigl.github.io/projects/gofile-enhanced/)
+
+[GitHub](https://github.com/ewigl/gofile-enhanced)
 
 ---
 
 ![cover](https://github.com/user-attachments/assets/b6831bfa-6838-412e-b71a-a1ed802ecee8)
 
 ## Install
-
-[GitHub](https://github.com/ewigl/gofile-enhanced)
 
 [Greasy Fork](https://greasyfork.org/scripts/515250)
 
@@ -25,7 +27,6 @@ click Download button,
 choose the way you prefer.
 
 ![usage](https://github.com/user-attachments/assets/36378f19-9966-414d-a344-82845a3087d0)
-
 
 ## Download Methods
 
