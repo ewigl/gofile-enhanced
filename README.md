@@ -2,15 +2,11 @@
 
 Batch-download GoFiles. Folder download. Automatically bypass high traffic alert. Use direct links. Built-in support for download managers like [AB Download Manager](https://github.com/amir1376/ab-download-manager), [Aria2](https://github.com/aria2/aria2) and [Internet Download Manager](https://www.internetdownloadmanager.com/).
 
----
+![cover](https://github.com/user-attachments/assets/b6831bfa-6838-412e-b71a-a1ed802ecee8)
 
-[![中文文档](https://img.shields.io/badge/中文文档-blue)](https://ewigl.github.io/projects/gofile-enhanced/)
+[中文文档](https://ewigl.github.io/projects/gofile-enhanced/)
 
 [GitHub](https://github.com/ewigl/gofile-enhanced)
-
----
-
-![cover](https://github.com/user-attachments/assets/b6831bfa-6838-412e-b71a-a1ed802ecee8)
 
 ## Install
 
@@ -68,7 +64,7 @@ This exports an IDM-specific format, which is a file with the ".ef2" file extens
 
 In IDM, go to Tasks → Import → From "IDM export file" → Select the .ef2 file.
 
-## Folder Dwonload
+## About Folder Dwonload
 
 > "Folder Download" can only be used with ABDM and Aria2, and it is **still in the testing phase**.
 
@@ -76,7 +72,5 @@ In IDM, go to Tasks → Import → From "IDM export file" → Select the .ef2 fi
 > You need to properly configure the download folder for ABDM or Aria2 (Absolute path, default path is `D:/Downloads`).
 
 If you did not set the download folder, files may be downloaded to unexpected locations (usually the root directory of your download manager's or your drive's), or just refuse to download.
-
-![file list](https://github.com/user-attachments/assets/cca8e363-5671-4a92-97cf-5d5759a3ac35)
 
 ![config](https://github.com/user-attachments/assets/0abb3628-a3aa-4765-ba17-c0a5d46f9946)
