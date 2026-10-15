@@ -24,7 +24,8 @@
   // import modules from gofile.io
   const gOrigin = location.origin;
 
-  const [{ getFolder }, { openMenu }, { popup }, { toast }] = await Promise.all([
+  const [{ sha256Hex }, { getFolder }, { openMenu }, { popup }, { toast }] = await Promise.all([
+    import(new URL('/js/core/sha256.js', gOrigin)),
     import(new URL('/js/services/contents.js', gOrigin)),
     import(new URL('/js/ui/menu.js', gOrigin)),
     import(new URL('/js/ui/popup.js', gOrigin)),
