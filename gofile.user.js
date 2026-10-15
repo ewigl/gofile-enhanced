@@ -354,7 +354,10 @@
             try {
               didTraverseFolder = true;
 
-              const res = await getFolder(GE_FileManager.state.account.token, childItem.id);
+              const res = await getFolder(GE_FileManager.state.account.token, childItem.id, {
+                pageSize: 9999,
+                // password: folderPassword
+              });
 
               if (res?.data) {
                 await collectItems(res.data, currentPath, true);
