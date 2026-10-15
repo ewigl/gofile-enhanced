@@ -2,7 +2,7 @@
 // @name               GoFile Enhanced
 // @name:zh-CN         GoFile 增强
 // @namespace          https://github.com/ewigl/gofile-enhanced
-// @version            0.9.7
+// @version            1.0.0
 // @description        Batch-download GoFiles. Folder download. Automatically bypass high traffic alert. Use direct links. Built-in support for download managers like AB Download Manager, Aria2, and IDM.
 // @description:zh-CN  GoFile 文件批量下载。支持直链下载、下载文件夹内容、绕过流量警告。可以配合 AB Download Manager、Aria2、IDM 等下载器使用。
 // @author             Licht
@@ -68,7 +68,6 @@
       download_method: '下载方式',
       empty_folder: '目录为空:',
       enter_password_please: '请输入密码',
-      error: '错误',
       failed_to_fetch_folder_content: '获取目录内容失败',
       failed_to_send_to_abdm: '未成功发送至 ABDM',
       failed_to_send_to_aria2: '未成功发送至 Aria2',
@@ -83,9 +82,7 @@
       reference: '参考',
       reset_aria2: '默认设置',
       select_all: '全选',
-      success: '成功',
       successfully_get_folder_content: '成功获取目录内容:',
-      successfully_reset: '已重置',
       successfully_sent_to_abdm: '已成功发送至 ABDM',
       successfully_sent_to_aria2: '已成功发送至 Aria2',
       test_connection: '测试连接',
@@ -123,7 +120,6 @@
       download_method: 'Download Method',
       empty_folder: 'Empty Folder:',
       enter_password_please: 'Password',
-      error: 'Error',
       failed_to_fetch_folder_content: 'Failed to fetch folder content',
       failed_to_send_to_abdm: 'Failed to send to ABDM',
       failed_to_send_to_aria2: 'Failed to send to Aria2',
@@ -139,9 +135,7 @@
       reference: 'Reference',
       reset_aria2: 'Default Settings',
       select_all: 'Select All',
-      success: 'Success',
       successfully_get_folder_content: 'Successfully fetched folder content:',
-      successfully_reset: 'successfully reset',
       successfully_sent_to_abdm: 'successfully sent to ABDM',
       successfully_sent_to_aria2: 'successfully sent to Aria2',
       test_connection: 'Test Connection',
@@ -374,16 +368,27 @@
               pageSize: 9999,
             };
 
-            // require password no matter whether the user has provided the correct password or not
+            // check if folder requires password
             if (childItem.password) {
-              busy.dismiss();
-              const folderPassword = await utils.promptPasswordViaPopup(childItem.name);
+              let folderPassword = '';
 
-              options.password = await sha256Hex(folderPassword);
+              if (childItem.code) {
+                // check if password is stored in sessionStorage
+                folderPassword = sessionStorage.getItem(`password|${childItem.code}`);
+              }
 
-              busy = toast.busy({
-                title: `${utils.getTranslation('fetching_folder_content')} ${currentPath}/${childItem.name}...`,
-              });
+              if (folderPassword) {
+                options.password = folderPassword;
+              } else {
+                // if folder password is not stored, prompt user for password
+                busy.dismiss();
+                folderPassword = await utils.promptPasswordViaPopup(childItem.name);
+
+                options.password = await sha256Hex(folderPassword);
+                busy = toast.busy({
+                  title: `${utils.getTranslation('fetching_folder_content')} ${currentPath}/${childItem.name}...`,
+                });
+              }
             }
 
             try {
@@ -626,8 +631,6 @@
       }
     },
     async testAria2Connection(form) {
-      // const busy = toast.busy({ title: utils.getTranslation('loading') });
-
       const rpcAddress = form.elements.aria2_rpc_address.value;
       const rpcSecret = form.elements.aria2_rpc_secret.value;
 
@@ -656,8 +659,6 @@
           type: 'error',
         });
       }
-
-      // busy.dismiss();
     },
     async sendToAria2(tbdItems) {
       const { rpcAddress, rpcSecret, rpcDir, rpcAutoStartDownload } = utils.getAllSettings('Aria2');
@@ -1128,7 +1129,6 @@
         if (unsafeWindow.GE_FileManager && unsafeWindow.GE_FileManager.state.status === 'ready') {
           if (!container) {
             operations.addEnhancedContainer(unsafeWindow.GE_FileManager.state.fileView);
-          } else {
           }
         } else if (container) {
           container.remove();
