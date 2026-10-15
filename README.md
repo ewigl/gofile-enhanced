@@ -1,6 +1,8 @@
 # Gofile Enhanced
 
-Batch-download GoFiles. Folder download. Automatically bypass high traffic alert. Use direct links. Built-in support for download managers like [AB Download Manager](https://github.com/amir1376/ab-download-manager), [Aria2](https://github.com/aria2/aria2) and [Internet Download Manager](https://www.internetdownloadmanager.com/).
+Batch-download GoFiles. Folder download. Automatically bypass high traffic alert.
+Use direct links. Built-in support for download managers like [AB Download Manager](https://github.com/amir1376/ab-download-manager),
+[Aria2](https://github.com/aria2/aria2) and [Internet Download Manager](https://www.internetdownloadmanager.com/).
 
 ![cover](https://github.com/user-attachments/assets/b6831bfa-6838-412e-b71a-a1ed802ecee8)
 
