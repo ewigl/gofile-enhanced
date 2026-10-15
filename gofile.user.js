@@ -66,24 +66,30 @@
       confirm: '确定',
       download: '下载',
       download_method: '下载方式',
+      empty_folder: '目录为空:',
+      enter_password_please: '请输入密码',
       error: '错误',
-      failed_to_fetch_folder_content: '获取文件夹内容失败',
+      failed_to_fetch_folder_content: '获取目录内容失败',
       failed_to_send_to_abdm: '未成功发送至 ABDM',
       failed_to_send_to_aria2: '未成功发送至 Aria2',
+      fetched_file_list: '已获取文件列表',
       fetching_file_list: '正在获取文件列表',
+      fetching_folder_content: '正在获取目录内容:',
       file_list: '文件列表',
       folder_download: '文件夹下载',
+      need_password_for: '需要正确密码以访问:',
       no_item_selected: '未选择文件',
       please_make_sure_you_have_configured_download_folder: '下载前请确保已正确配置下载目录。',
       reference: '参考',
       reset_aria2: '默认设置',
       select_all: '全选',
       success: '成功',
-      successfully_fetched_file_list: '成功获取文件列表',
+      successfully_get_folder_content: '成功获取目录内容:',
       successfully_reset: '已重置',
       successfully_sent_to_abdm: '已成功发送至 ABDM',
       successfully_sent_to_aria2: '已成功发送至 Aria2',
       test_connection: '测试连接',
+      this_folder_requires_password: '该目录受密码保护:',
       unsupported_format: '不支持的格式',
       request_aborted: '请求中断',
       request_timed_out: '请求超时',
@@ -104,7 +110,7 @@
       aria2_connection_fail: 'Aria2 connection failed',
       aria2_rpc_address: 'Aria2 RPC Address',
       aria2_rpc_address_placeholder: 'Default is http://localhost:6800/jsonrpc',
-      aria2_rpc_auto_start_download: 'Auto Start Dwonload',
+      aria2_rpc_auto_start_download: 'Auto Start Download',
       aria2_rpc_secret: 'Aria2 RPC Secret',
       aria2_rpc_secret_placeholder: 'Leave empty if not set',
       aria2_rpc_dir: 'Aria2 RPC Directory',
@@ -115,13 +121,18 @@
       confirm: 'Confirm',
       download: 'Download',
       download_method: 'Download Method',
+      empty_folder: 'Empty Folder:',
+      enter_password_please: 'Password',
       error: 'Error',
       failed_to_fetch_folder_content: 'Failed to fetch folder content',
       failed_to_send_to_abdm: 'Failed to send to ABDM',
       failed_to_send_to_aria2: 'Failed to send to Aria2',
+      fetched_file_list: 'Fetched file list',
       fetching_file_list: 'Fetching file list',
+      fetching_folder_content: 'Fetching folder content:',
       file_list: 'File List',
       folder_download: 'Folder Download',
+      need_password_for: 'Need Correct Password For:',
       no_item_selected: 'No item selected',
       please_make_sure_you_have_configured_download_folder:
         'Before downloading, make sure you have configured the download folder correctly.',
@@ -129,11 +140,12 @@
       reset_aria2: 'Default Settings',
       select_all: 'Select All',
       success: 'Success',
-      successfully_fetched_file_list: 'Successfully fetched file list',
+      successfully_get_folder_content: 'Successfully fetched folder content:',
       successfully_reset: 'successfully reset',
       successfully_sent_to_abdm: 'successfully sent to ABDM',
       successfully_sent_to_aria2: 'successfully sent to Aria2',
       test_connection: 'Test Connection',
+      this_folder_requires_password: 'This folder is password protected:',
       unsupported_format: 'Unsupported Format',
       request_aborted: 'Request Aborted',
       request_timed_out: 'Request Timed Out',
@@ -240,6 +252,9 @@
         return acc;
       }, {});
     },
+    requirePassword(folderData) {
+      return folderData.canAccess === false && folderData.password === true;
+    },
     saveForm(category, form) {
       Object.entries(GE_CONFIG[category].settings).forEach(([settingKey, setting]) => {
         const element = form.elements[setting.key];
@@ -307,7 +322,11 @@
       });
     },
     async collectAllItems(selectedKeys = []) {
-      const busy = toast.busy({
+      // const busy = toast.busy({
+      //   title: utils.getTranslation('fetching_file_list'),
+      // });
+      // use let instead of const to allow updating the busy toast message during folder traversal
+      let busy = toast.busy({
         title: utils.getTranslation('fetching_file_list'),
       });
 
@@ -327,6 +346,10 @@
         for (const key of Object.keys(contentData.children || {})) {
           const childItem = contentData.children[key];
 
+          busy.update({
+            title: `${utils.getTranslation('fetching_folder_content')} ${currentPath}/${childItem.name}...`,
+          });
+
           const directlySelected = selectedSet.has(childItem.id);
 
           const isSelected = inheritedSelected || directlySelected;
@@ -343,26 +366,50 @@
           }
 
           if (childItem.type === 'folder') {
-            if (!isSelected) {
+            if (!isSelected || childItem.childrenCount === 0) {
               continue;
             }
 
-            if (childItem.childrenCount === 0) {
-              continue;
+            const options = {
+              pageSize: 9999,
+            };
+
+            // require password no matter whether the user has provided the correct password or not
+            if (childItem.password) {
+              busy.dismiss();
+              const folderPassword = await utils.promptPasswordViaPopup(childItem.name);
+
+              options.password = await sha256Hex(folderPassword);
+
+              busy = toast.busy({
+                title: `${utils.getTranslation('fetching_folder_content')} ${currentPath}/${childItem.name}...`,
+              });
             }
 
             try {
               didTraverseFolder = true;
 
-              const res = await getFolder(GE_FileManager.state.account.token, childItem.id, {
-                pageSize: 9999,
-                // password: folderPassword
-              });
+              const res = await getFolder(GE_FileManager.state.account.token, childItem.id, options);
 
-              if (res?.data) {
-                await collectItems(res.data, currentPath, true);
+              if (utils.requirePassword(res.data)) {
+                toast(`${utils.getTranslation('need_password_for')} ${childItem.name}`, {
+                  type: 'error',
+                });
               } else {
-                toast(`${utils.getTranslation('failed_to_fetch_folder_content')} ${childItem.name}`, { type: 'error' });
+                if (res?.data) {
+                  if (res?.data.childrenCount > 0) {
+                    toast(`${utils.getTranslation('successfully_get_folder_content')} ${childItem.name}`, {
+                      type: 'success',
+                    });
+                    await collectItems(res.data, currentPath, true);
+                  } else {
+                    toast(`${utils.getTranslation('empty_folder')} ${childItem.name}`, {
+                      type: 'warning',
+                    });
+                  }
+                } else {
+                  toast(`${utils.getTranslation('failed_to_fetch_folder_content')} ${childItem.name}`, { type: 'error' });
+                }
               }
             } catch (error) {
               toast(`${utils.getTranslation('failed_to_fetch_folder_content')} ${childItem.name} ${error}`, { type: 'error' });
@@ -375,7 +422,7 @@
 
       if (didTraverseFolder) {
         busy.succeed({
-          title: utils.getTranslation('successfully_fetched_file_list'),
+          title: utils.getTranslation('fetched_file_list'),
         });
       } else {
         busy.dismiss();
@@ -911,6 +958,45 @@
                     </form>
                 </div>
             `;
+    },
+    // get password from user via popup, return a promise that resolves to the password or null if user cancels
+    promptPasswordViaPopup(folderName) {
+      return new Promise((resolve) => {
+        popup.open({
+          title: `${utils.getTranslation('this_folder_requires_password')} ${folderName}`,
+          size: 'md',
+          content: `
+        <div class="space-y-3">
+          <p class="text-sm text-slate-300">${utils.getTranslation('enter_password_please')}:</p>
+          <input
+            type="password"
+            id="ge-folder-pwd"
+            class="input"
+            placeholder="${utils.getTranslation('enter_password_please')}" autocomplete="off" />
+        </div>
+      `,
+          actions: [
+            {
+              label: utils.getTranslation('cancel'),
+              variant: 'ghost',
+              onClick: (h) => {
+                h.close();
+                resolve(null);
+              },
+            },
+            {
+              label: utils.getTranslation('confirm'),
+              variant: 'primary',
+              onClick: (h) => {
+                const pwdInput = document.getElementById('ge-folder-pwd');
+                const password = pwdInput ? pwdInput.value : '';
+                h.close();
+                resolve(password);
+              },
+            },
+          ],
+        });
+      });
     },
   };
 
