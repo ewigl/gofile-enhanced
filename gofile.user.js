@@ -2,7 +2,7 @@
 // @name               GoFile Enhanced
 // @name:zh-CN         GoFile 增强
 // @namespace          https://github.com/ewigl/gofile-enhanced
-// @version            1.0.0
+// @version            1.1.0
 // @description        Batch-download GoFiles. Folder download. Automatically bypass high traffic alert. Use direct links. Built-in support for download managers like AB Download Manager, Aria2, and IDM.
 // @description:zh-CN  GoFile 文件批量下载。支持直链下载、下载文件夹内容、绕过流量警告。可以配合 AB Download Manager、Aria2、IDM 等下载器使用。
 // @author             Licht
@@ -367,28 +367,33 @@
             const options = {
               pageSize: 9999,
             };
+            let folderPassword = '';
 
             // check if folder requires password
             if (childItem.password) {
-              let folderPassword = '';
-
-              if (childItem.code) {
-                // check if password is stored in sessionStorage
-                folderPassword = sessionStorage.getItem(`password|${childItem.code}`);
+              // check if passwordOk
+              if (childItem.passwordStatus === 'passwordOk') {
+                folderPassword = sessionStorage.getItem(`password|${contentData.code}`);
+                sessionStorage.setItem(`password|${childItem.code}`, folderPassword);
               }
 
-              if (folderPassword) {
-                options.password = folderPassword;
-              } else {
-                // if folder password is not stored, prompt user for password
-                busy.dismiss();
-                folderPassword = await utils.promptPasswordViaPopup(childItem.name);
+              // get sessionStorage stored manually by script, for folder without code returned
+              if (sessionStorage.getItem(`password|${childItem.id}`)) {
+                folderPassword = sessionStorage.getItem(`password|${childItem.id}`);
+              }
 
-                options.password = await sha256Hex(folderPassword);
+              if (!folderPassword) {
+                // no pwd? no problem.
+                busy.dismiss();
+                let rawPwd = await utils.promptPasswordViaPopup(childItem.name);
+                rawPwd && (folderPassword = await sha256Hex(rawPwd));
+
                 busy = toast.busy({
                   title: `${utils.getTranslation('fetching_folder_content')} ${currentPath}/${childItem.name}...`,
                 });
               }
+
+              options.password = folderPassword;
             }
 
             try {
@@ -406,6 +411,13 @@
                     toast(`${utils.getTranslation('successfully_get_folder_content')} ${childItem.name}`, {
                       type: 'success',
                     });
+
+                    // cache the password in sessionStorage
+                    // cache locked folder pwd with id
+                    sessionStorage.setItem(`password|${res.data.id}`, folderPassword);
+                    // cache unlocked folder pwd with code just in case
+                    sessionStorage.setItem(`password|${res.data.code}`, folderPassword);
+
                     await collectItems(res.data, currentPath, true);
                   } else {
                     toast(`${utils.getTranslation('empty_folder')} ${childItem.name}`, {
